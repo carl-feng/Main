@@ -1,0 +1,113 @@
+#!/bin/bash
+
+if [ $# = 0 ]; then
+	echo "usage: $0 [up|down|left|right|zoom_in|zoom_out|focus_far|focus_near|iris_big|iris_small|set_preset|goto_preset] [speed]"
+	exit 1
+fi
+
+speed=$2
+
+if [ -z $2 ]; then
+	speed=1
+else
+	speed=$2
+fi
+
+PanX=0
+TiltY=0
+ZoomX=0
+
+flag=0
+
+if [ $1 = "up" ]; then
+	TiltY=0.$speed
+elif [ $1 = "down" ]; then
+	TiltY=-0.$speed
+elif [ $1 = "left" ]; then
+	PanX=0.$speed
+elif [ $1 = "right" ]; then
+	PanX=-0.$speed
+elif [ $1 = "zoom_in" ]; then
+	ZoomX=0.$speed
+elif [ $1 = "zoom_out" ]; then
+	ZoomX=-0.$speed
+elif [ $1 = "set_preset" ]; then
+	flag=1
+elif [ $1 = "goto_preset" ]; then
+	flag=2
+fi
+
+echo "action=$1"
+
+if [ $flag != 0 ]; then
+
+if [ $flag = 1 ]; then
+action="SetPreset"
+elif [ $flag = 2 ]; then
+action="GotoPreset"
+fi
+
+post=`cat << EOF
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:tptz="http://www.onvif.org/ver20/ptz/wsdl" xmlns:tt="http://www.onvif.org/ver10/schema">
+  <s:Body>
+    <tptz:$action>
+      <tptz:ProfileToken>MainStream</tptz:ProfileToken>
+      <tptz:PresetToken>1</tptz:PresetToken>
+    </tptz:$action>
+  </s:Body>
+</s:Envelope>
+EOF`
+
+echo $post | curl -X POST -H 'Content-type:application/soap+xml; charset=utf-8' -d @- -u admin:admin http://192.168.1.60:8999/onvif/ptz_service > /dev/null 2>&1 &
+
+exit
+fi
+
+echo "panspeed=$PanX"
+echo "tiltspeed=$TiltY"
+
+echo ""
+
+
+post=`cat << EOF
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope">
+    <s:Body xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <ContinuousMove xmlns="http://www.onvif.org/ver20/ptz/wsdl">
+            <ProfileToken>MainStream</ProfileToken>
+            <Velocity>
+                <PanTilt x="$PanX" y="$TiltY" space="http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace" xmlns="http://www.onvif.org/ver10/schema" />
+                <Zoom x="$ZoomX" space="http://www.onvif.org/ver10/tptz/ZoomSpaces/VelocityGenericSpace" xmlns="http://www.onvif.org/ver10/schema" />
+            </Velocity>
+        </ContinuousMove>
+    </s:Body>
+</s:Envelope>
+EOF`
+
+echo $post | curl -X POST -H 'Content-type:application/soap+xml; charset=utf-8' -d @- -u admin:admin http://192.168.1.60:8999/onvif/ptz_service > /dev/null 2>&1 &
+
+PanX=0
+TiltY=0
+ZoomX=0
+
+post=`cat << EOF
+<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope">
+    <s:Body xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <ContinuousMove xmlns="http://www.onvif.org/ver20/ptz/wsdl">
+            <ProfileToken>MainStream</ProfileToken>
+            <Velocity>
+                <PanTilt x="$PanX" y="$TiltY" space="http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace" xmlns="http://www.onvif.org/ver10/schema" />
+                <Zoom x="$ZoomX" space="http://www.onvif.org/ver10/tptz/ZoomSpaces/VelocityGenericSpace" xmlns="http://www.onvif.org/ver10/schema" />
+            </Velocity>
+        </ContinuousMove>
+    </s:Body>
+</s:Envelope>
+EOF`
+
+sleep 0.5
+
+echo $post | curl -X POST -H 'Content-type:application/soap+xml; charset=utf-8' -d @- -u admin:admin http://192.168.1.60:8999/onvif/ptz_service > /dev/null 2>&1 &
+
+exit

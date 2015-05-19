@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#flush data into disk
+sync
+
+md5_config_ini=`md5sum config.ini | awk '{print $1}'`;
+md5_config_ini_bak=`md5sum config.ini_bak | awk '{print $1}'`;
+    
+echo "md5[config.ini] "$md5_config_ini 
+echo "md5[config.ini_bak] "$md5_config_ini_bak
+
+if [ "$md5_config_ini" = "$md5_config_ini_bak" ]; then
+    echo "has no necessary to $1"
+    exit
+fi
+
+if [ $1 = "backup" ]; then
+    cp config.ini config.ini_bak
+    echo "finished to backup config.ini"
+elif [ $1 = "restore" ]; then
+    cp config.ini_bak config.ini
+    echo "finished to restore config.ini"
+fi
