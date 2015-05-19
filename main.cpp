@@ -457,30 +457,33 @@ int main( int argc, char* argv[] )
         struct tm *pTM = localtime(&now);
         static int hour = 0;
         
-        if(pTM->tm_hour != hour && alarm_voltage < CUtil::ini_query_float("init", "alarm_voltage", -1))
+        if(pTM->tm_hour != hour)
         {
-            CUtil::SetAlarmStatus(false);
-            if(CUtil::GetSendSMSStatus())
+            if(alarm_voltage < CUtil::ini_query_float("init", "alarm_voltage", -1))
             {
-                USER_PRINT("solar battery voltage is too slow to stop alarm.\n");
-                vector<string> vPhoneNumbers = CUtil::GetPhoneNumber();
-                USER_PRINT("start to send sms to [%d] people ...\n", vPhoneNumbers.size());
-                for(unsigned int i = 0; i < vPhoneNumbers.size(); i++)
+                CUtil::SetAlarmStatus(false);
+                if(CUtil::GetSendSMSStatus())
                 {
-                    bool ret = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation() + " 电池电压过低!!!");
-                    if(ret)
+                    USER_PRINT("solar battery voltage is too slow to stop alarm.\n");
+                    vector<string> vPhoneNumbers = CUtil::GetPhoneNumber();
+                    USER_PRINT("start to send sms to [%d] people ...\n", vPhoneNumbers.size());
+                    for(unsigned int i = 0; i < vPhoneNumbers.size(); i++)
                     {
-                        USER_PRINT("send sms success.\n");
-                    }
-                    else 
-                    {
-                        USER_PRINT("send sms failed.\n");
+                        bool ret = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation() + " 电池电压过低!!!");
+                        if(ret)
+                        {
+                            USER_PRINT("send sms success.\n");
+                        }
+                        else 
+                        {
+                            USER_PRINT("send sms failed.\n");
+                        }
                     }
                 }
             }
+            else
+                CUtil::SetAlarmStatus(true);
         }
-        else
-            CUtil::SetAlarmStatus(true);
         hour = pTM->tm_hour;
 
         /* sleep 120s */
