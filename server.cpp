@@ -250,6 +250,14 @@ static int process_req(struct mg_connection *conn) {
         message["sms"] = s.sendsms;
         message["alarm"] = s.alarm;
 
+        battery b = CUtil::GetBattery();
+        
+        message["battery"]["solar_voltage"] = b.solar_voltage;
+        message["battery"]["battery_voltage"] = b.battery_voltage;
+        message["battery"]["charging_current"] = b.charging_current;
+        message["battery"]["discharing_current"] = b.discharging_current;
+        message["battery"]["llumination_intensity"] = b.illumination_intensity;
+
         GPS g = CUtil::GetGPS();
         message["GPS"]["latitude"] = g.latitude;
         message["GPS"]["longitude"] = g.longitude;
