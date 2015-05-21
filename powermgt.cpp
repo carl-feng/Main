@@ -29,7 +29,7 @@ typedef ULONG_PTR   DWORD_PTR;
                             ((WORD)((BYTE)(((DWORD_PTR)(b)) & 0xff))) << 8))
 
 #define NUM                 100
-int n = 0, i, cport_nr = 0, bdrate = 115200;
+int n = 0, i, cport_nr = 0, bdrate = 4800;
 unsigned char buf[NUM];
 char mode[] = {'8','N','1',0};
 
@@ -73,8 +73,12 @@ bool SendHeartBeatCmd(uint16_t seconds)
     szBuf[4] = LOBYTE(seconds);
     szBuf[5] = HIBYTE(seconds);
     szBuf[6] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5]) % 0xFF);
-	RS232_SendBuf(cport_nr, szBuf, 7);
+    RS232_SendBuf(cport_nr, szBuf, 7);
 
+    for(int i = 0; i < 7; i++)
+        USER_PRINT("%x ", szBuf[i]);
+    USER_PRINT("\n-------\n");
+    
     for(i = 0; i < 5; i++)
     {
         msleep(TIMEOUT);
@@ -82,10 +86,15 @@ bool SendHeartBeatCmd(uint16_t seconds)
     }
 	RS232_CloseComport(cport_nr);
 	pthread_mutex_unlock(&mutex);
-    if(n != 7)
+    
+    for(int i = 0; i < n; i++)
+        USER_PRINT("%x ", szBuf[i]);
+    USER_PRINT("\n Receive bytes n = %d\n", n);
+    
+    if(n != 5)
         bCheck = false;
     else
-        bCheck = (szBuf[6] == ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5]) % 0xFF));
+        bCheck = (szBuf[4] == (szBuf[2] % 0xFF));
     USER_PRINT("SendHeartBeatCmd bCheck = %d\n", bCheck);
     return bCheck;
 }
@@ -122,6 +131,9 @@ bool SendRestartOSCmd(uint16_t delay)
     szBuf[7] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5] + szBuf[6]) % 0xFF);
 	RS232_SendBuf(cport_nr, szBuf, 8);
 
+    for(int i = 0; i < 8; i++)
+        USER_PRINT("%x ", szBuf[i]);
+    USER_PRINT("\n-------\n");
 
     for(i = 0; i < 5; i++)
     {
@@ -130,10 +142,15 @@ bool SendRestartOSCmd(uint16_t delay)
     }
 	RS232_CloseComport(cport_nr);
 	pthread_mutex_unlock(&mutex);
-    if(n != 8)
+    
+    for(int i = 0; i < n; i++)
+        USER_PRINT("%x ", szBuf[i]);
+    USER_PRINT("\n Receive bytes n = %d\n", n);
+    
+    if(n != 5)
         bCheck = false;
     else
-        bCheck = (szBuf[7] == ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5] + szBuf[6]) % 0xFF));
+        bCheck = (szBuf[4] == (szBuf[2] % 0xFF));
     USER_PRINT("SendRestartOSCmd bCheck = %d\n", bCheck);
     return bCheck;
 }
@@ -164,12 +181,17 @@ bool SendCameraPowerCmd(uint8_t cam_index, uint16_t delay, bool enable)
     szBuf[1] = HEADER_2;
     szBuf[2] = enable ? CAM_POWER_ON_CMD : CAM_POWER_OFF_CMD;
     szBuf[3] = 4;
-    szBuf[4] = cam_index;
+    szBuf[4] = cam_index + 1;
     szBuf[5] = LOBYTE(delay);
     szBuf[6] = HIBYTE(delay);
     szBuf[7] = 1;
     szBuf[8] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5] + szBuf[6] + szBuf[7]) % 0xFF);
-	RS232_SendBuf(cport_nr, szBuf, 9);
+    
+    for(int i = 0; i < 9; i++)
+        USER_PRINT("%x ", szBuf[i]);
+    USER_PRINT("\n-------\n");
+	
+    RS232_SendBuf(cport_nr, szBuf, 9);
 
     for(i = 0; i < 5; i++)
     {
@@ -178,10 +200,15 @@ bool SendCameraPowerCmd(uint8_t cam_index, uint16_t delay, bool enable)
     }
 	RS232_CloseComport(cport_nr);
 	pthread_mutex_unlock(&mutex);
-    if(n != 9)
+    
+    for(int i = 0; i < n; i++)
+        USER_PRINT("%x ", szBuf[i]);
+    USER_PRINT("\n Receive bytes n = %d\n", n);
+    
+    if(n != 5)
         bCheck = false;
     else
-        bCheck = (szBuf[8] == ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5] + szBuf[6] + szBuf[7]) % 0xFF));
+        bCheck = (szBuf[4] == (szBuf[2] % 0xFF));
     USER_PRINT("SendCameraPowerCmd bCheck = %d\n", bCheck);
     return bCheck;
 }
@@ -213,6 +240,10 @@ bool SendSolarStatusCmd()
     szBuf[4] = ((szBuf[2] + szBuf[3]) % 0xFF);
 	RS232_SendBuf(cport_nr, szBuf, 5);
 
+    for(int i = 0; i < 5; i++)
+        USER_PRINT("%x ", szBuf[i]);
+    USER_PRINT("\n-------\n");
+    
     for(i = 0; i < 5; i++)
     {
         msleep(TIMEOUT);
@@ -220,11 +251,16 @@ bool SendSolarStatusCmd()
     }
 	RS232_CloseComport(cport_nr);
 	pthread_mutex_unlock(&mutex);
+    
+    for(int i = 0; i < n; i++)
+        USER_PRINT("%x ", szBuf[i]);
+    USER_PRINT("\n Receive bytes n = %d\n", n);
+    
     if(n != 15)
         bCheck = false;
     else
     {
-        bCheck = (szBuf[14] == ((szBuf[2] + szBuf[3] + 
+        bCheck = (szBuf[14]+2 == ((szBuf[2] + szBuf[3] + 
             szBuf[4] + szBuf[5] + szBuf[6] + szBuf[7] + szBuf[8] +
             szBuf[9] + szBuf[10] + szBuf[11] + szBuf[12] + szBuf[13]) % 0xFF));
         if(bCheck)

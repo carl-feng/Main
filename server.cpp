@@ -305,7 +305,7 @@ static int process_req(struct mg_connection *conn) {
                 _close(uuid, index);
             out["error_code"] = SUCCESS_CODE;
             out["error_message"] = "success";
-            out["message"] = message;
+            out["message"] = "";
         }else{
             out["error_code"] = ERROR_CODE;
             out["error_message"] = "parse json failed.";
