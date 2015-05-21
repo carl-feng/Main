@@ -76,8 +76,8 @@ bool SendHeartBeatCmd(uint16_t seconds)
     RS232_SendBuf(cport_nr, szBuf, 7);
 
     for(int i = 0; i < 7; i++)
-        USER_PRINT("%x ", szBuf[i]);
-    USER_PRINT("\n-------\n");
+        printf("%x ", szBuf[i]);
+    printf("\n");
     
     for(i = 0; i < 5; i++)
     {
@@ -88,8 +88,9 @@ bool SendHeartBeatCmd(uint16_t seconds)
 	pthread_mutex_unlock(&mutex);
     
     for(int i = 0; i < n; i++)
-        USER_PRINT("%x ", szBuf[i]);
-    USER_PRINT("\n Receive bytes n = %d\n", n);
+        printf("%x ", szBuf[i]);
+    printf("\n");
+    USER_PRINT("Receive bytes n = %d\n", n);
     
     if(n != 5)
         bCheck = false;
@@ -132,8 +133,8 @@ bool SendRestartOSCmd(uint16_t delay)
 	RS232_SendBuf(cport_nr, szBuf, 8);
 
     for(int i = 0; i < 8; i++)
-        USER_PRINT("%x ", szBuf[i]);
-    USER_PRINT("\n-------\n");
+        printf("%x ", szBuf[i]);
+    printf("\n");
 
     for(i = 0; i < 5; i++)
     {
@@ -144,8 +145,9 @@ bool SendRestartOSCmd(uint16_t delay)
 	pthread_mutex_unlock(&mutex);
     
     for(int i = 0; i < n; i++)
-        USER_PRINT("%x ", szBuf[i]);
-    USER_PRINT("\n Receive bytes n = %d\n", n);
+        printf("%x ", szBuf[i]);
+    printf("\n");
+    USER_PRINT("Receive bytes n = %d\n", n);
     
     if(n != 5)
         bCheck = false;
@@ -188,8 +190,8 @@ bool SendCameraPowerCmd(uint8_t cam_index, uint16_t delay, bool enable)
     szBuf[8] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5] + szBuf[6] + szBuf[7]) % 0xFF);
     
     for(int i = 0; i < 9; i++)
-        USER_PRINT("%x ", szBuf[i]);
-    USER_PRINT("\n-------\n");
+        printf("%x ", szBuf[i]);
+    printf("\n");
 	
     RS232_SendBuf(cport_nr, szBuf, 9);
 
@@ -202,8 +204,9 @@ bool SendCameraPowerCmd(uint8_t cam_index, uint16_t delay, bool enable)
 	pthread_mutex_unlock(&mutex);
     
     for(int i = 0; i < n; i++)
-        USER_PRINT("%x ", szBuf[i]);
-    USER_PRINT("\n Receive bytes n = %d\n", n);
+        printf("%x ", szBuf[i]);
+    printf("\n");
+    USER_PRINT("Receive bytes n = %d\n", n);
     
     if(n != 5)
         bCheck = false;
@@ -241,8 +244,8 @@ bool SendSolarStatusCmd()
 	RS232_SendBuf(cport_nr, szBuf, 5);
 
     for(int i = 0; i < 5; i++)
-        USER_PRINT("%x ", szBuf[i]);
-    USER_PRINT("\n-------\n");
+        printf("%x ", szBuf[i]);
+    printf("\n");	
     
     for(i = 0; i < 5; i++)
     {
@@ -253,8 +256,9 @@ bool SendSolarStatusCmd()
 	pthread_mutex_unlock(&mutex);
     
     for(int i = 0; i < n; i++)
-        USER_PRINT("%x ", szBuf[i]);
-    USER_PRINT("\n Receive bytes n = %d\n", n);
+        printf("%x ", szBuf[i]);
+    printf("\n");	
+    USER_PRINT("Receive bytes n = %d\n", n);
     
     if(n != 15)
         bCheck = false;
