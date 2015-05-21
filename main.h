@@ -162,7 +162,7 @@ bool isPhoneNumberValid(string phoneNumber)
 
 bool SendSMS(string phoneNum, string text)
 {
-    return true;
+    //return true;
     
     char sms[1024];
     USER_PRINT("will send sms \"%s\" to [%s]\n", text.c_str(), phoneNum.c_str());
