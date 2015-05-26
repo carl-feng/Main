@@ -91,8 +91,8 @@ void RestartSystem(enum RestartReason reason)
     sprintf(buffer, "echo \"[`date`] reason = %d\" >> /root/reason\n", reason);
     system(buffer);
     g_bForceExit = true;
-    sleep(10);
-    system("./restart &");
+    //system("./restart &");
+    SendRestartOSCmd(10000);
     exit(-1);
 }
 

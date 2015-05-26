@@ -268,7 +268,8 @@ static int process_req(struct mg_connection *conn) {
     }
     else if (strcmp(conn->uri, "/restart") == 0) {
         g_bForceExit = true;
-        system("./restart &");
+        //system("./restart &");
+        SendRestartOSCmd(2000);
         out["error_code"] = SUCCESS_CODE;
         out["error_message"] = "restart success";
         out["message"] = "";

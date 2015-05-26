@@ -72,7 +72,7 @@ bool SendHeartBeatCmd(uint16_t seconds)
     szBuf[3] = 2;
     szBuf[4] = LOBYTE(seconds);
     szBuf[5] = HIBYTE(seconds);
-    szBuf[6] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5]) % 0xFF);
+    szBuf[6] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5]) & 0xFF);
     RS232_SendBuf(cport_nr, szBuf, 7);
 
     for(int i = 0; i < 7; i++)
@@ -95,7 +95,7 @@ bool SendHeartBeatCmd(uint16_t seconds)
     if(n != 5)
         bCheck = false;
     else
-        bCheck = (szBuf[4] == (szBuf[2] % 0xFF));
+        bCheck = (szBuf[4] == (szBuf[2] & 0xFF));
     USER_PRINT("SendHeartBeatCmd bCheck = %d\n", bCheck);
     return bCheck;
 }
@@ -129,7 +129,7 @@ bool SendRestartOSCmd(uint16_t delay)
     szBuf[4] = LOBYTE(delay);
     szBuf[5] = HIBYTE(delay);
     szBuf[6] = 1;
-    szBuf[7] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5] + szBuf[6]) % 0xFF);
+    szBuf[7] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5] + szBuf[6]) & 0xFF);
 	RS232_SendBuf(cport_nr, szBuf, 8);
 
     for(int i = 0; i < 8; i++)
@@ -152,7 +152,7 @@ bool SendRestartOSCmd(uint16_t delay)
     if(n != 5)
         bCheck = false;
     else
-        bCheck = (szBuf[4] == (szBuf[2] % 0xFF));
+        bCheck = (szBuf[4] == (szBuf[2] & 0xFF));
     USER_PRINT("SendRestartOSCmd bCheck = %d\n", bCheck);
     return bCheck;
 }
@@ -187,7 +187,7 @@ bool SendCameraPowerCmd(uint8_t cam_index, uint16_t delay, bool enable)
     szBuf[5] = LOBYTE(delay);
     szBuf[6] = HIBYTE(delay);
     szBuf[7] = 1;
-    szBuf[8] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5] + szBuf[6] + szBuf[7]) % 0xFF);
+    szBuf[8] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5] + szBuf[6] + szBuf[7]) & 0xFF);
     
     for(int i = 0; i < 9; i++)
         printf("%x ", szBuf[i]);
@@ -211,7 +211,7 @@ bool SendCameraPowerCmd(uint8_t cam_index, uint16_t delay, bool enable)
     if(n != 5)
         bCheck = false;
     else
-        bCheck = (szBuf[4] == (szBuf[2] % 0xFF));
+        bCheck = (szBuf[4] == (szBuf[2] & 0xFF));
     USER_PRINT("SendCameraPowerCmd bCheck = %d\n", bCheck);
     return bCheck;
 }
@@ -240,7 +240,7 @@ bool SendSolarStatusCmd()
     szBuf[1] = HEADER_2;
     szBuf[2] = SOLAR_STATUS_CMD;
     szBuf[3] = 0;
-    szBuf[4] = ((szBuf[2] + szBuf[3]) % 0xFF);
+    szBuf[4] = ((szBuf[2] + szBuf[3]) & 0xFF);
 	RS232_SendBuf(cport_nr, szBuf, 5);
 
     for(int i = 0; i < 5; i++)
@@ -264,9 +264,9 @@ bool SendSolarStatusCmd()
         bCheck = false;
     else
     {
-        bCheck = (szBuf[14]+2 == ((szBuf[2] + szBuf[3] + 
+        bCheck = (szBuf[14] == ((szBuf[2] + szBuf[3] + 
             szBuf[4] + szBuf[5] + szBuf[6] + szBuf[7] + szBuf[8] +
-            szBuf[9] + szBuf[10] + szBuf[11] + szBuf[12] + szBuf[13]) % 0xFF));
+            szBuf[9] + szBuf[10] + szBuf[11] + szBuf[12] + szBuf[13]) & 0xFF));
         if(bCheck)
         {
             battery b;
@@ -303,7 +303,7 @@ boost::mutex _mutex;
 void wait_thread(int index)
 {
     int sec;
-    if(index == 0) sec = CUtil::ini_query_int("Global", "wait_time_cam0", 5);
+    if(index == 0) sec = CUtil::ini_query_int("Global", "wait_time_cam0", 10);
     if(index == 1) sec = CUtil::ini_query_int("Global", "wait_time_cam1", 120);
     USER_PRINT("wait thread: sleep %ds\n", sec);
     sleep(sec);
@@ -362,7 +362,7 @@ void _open(string uuid, int index, bool sync)
         if(sync)
         {
             int sec;
-            if(index == 0) sec = CUtil::ini_query_int("Global", "wait_time_cam0", 5);
+            if(index == 0) sec = CUtil::ini_query_int("Global", "wait_time_cam0", 10);
             if(index == 1) sec = CUtil::ini_query_int("Global", "wait_time_cam1", 120);
             USER_PRINT("open: sync to wait for cam%d ready, sleep %ds\n", index, sec);
             sleep(sec);
@@ -415,7 +415,7 @@ void expire_check_thread()
         
         list<Item>::iterator it;
         time_t now = time(NULL);
-        time_t remain = CUtil::ini_query_int("Global", "poweron_time_cam", 15*60); //default 15mins
+        time_t remain = CUtil::ini_query_int("Global", "poweron_time_cam", 10*60); //default 10mins
         for(it = cam0_list.begin(); it != cam0_list.end();)
         {
             if((now - it->start) > remain)
