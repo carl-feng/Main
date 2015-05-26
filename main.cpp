@@ -201,7 +201,7 @@ void WorkThread()
             time_t now;
             time(&now);
             struct tm *pTM = localtime(&now);
-            if(pTM->tm_hour > 6 && pTM->tm_hour < 18)
+            if(pTM->tm_hour > 6 && pTM->tm_hour < 21)
                 sleepSec = CUtil::GetCheckInterval();
             else
                 sleepSec = CUtil::GetCheckInterval_Night();
