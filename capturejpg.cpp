@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string>
 #include <cstring>
-
+#include <unistd.h>
 
 int main(int argc, char * argv[])
 {

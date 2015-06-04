@@ -77,7 +77,8 @@ enum RestartReason
     CAMERA0_CAPTURE_ERROR,
     CAMERA1_CAPTURE_ERROR,
     CAMERA0_CHECK_ERROR,
-    CAMERA1_CHECK_ERROR
+    CAMERA1_CHECK_ERROR,
+    DAILY_RESTART
 };
 
 bool g_bForceExit = false;
@@ -245,6 +246,7 @@ bool Check3G()
 {
     // check the 3g
     int nRetry = 3;
+    static time_t start = 0, now;
     int ret = system("ifconfig | grep ppp0 > /dev/null 2>&1");
     if(ret) goto fail;
 
@@ -256,11 +258,18 @@ bool Check3G()
             goto fail;
         USER_PRINT("Retry to check the 3G connection\n");
     }
+    start = 0;
 
     if(!CUtil::Is3GEnabled())
         CUtil::Save3GStatus(true);
     return true;
 fail:
+    if(start == 0)
+        start = time(NULL);
+    now = time(NULL);
+    if(now - start > 3600)
+        RestartSystem(_3G_ERROR);
+
     USER_PRINT("3g connection lost.\n");
     CUtil::Save3GStatus(false);
     return false;

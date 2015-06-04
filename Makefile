@@ -37,7 +37,7 @@ mongoose.o : mongoose.h mongoose.c
 	g++ -c mongoose.c ${cflags}
 
 watchdog : Util.o minIni.o watchdog.cpp log.h backup.o
-	g++ -o watchdog Util.o backup.o minIni.o watchdog.cpp -lcurl -ljsoncpp ${cflags}
+	g++ -o watchdog Util.o backup.o minIni.o watchdog.cpp -lcurl -ljsoncpp -lboost_system ${cflags}
 
 capturejpg : capturejpg.cpp
 	g++ -o capturejpg capturejpg.cpp -lzmq ${cflags}
