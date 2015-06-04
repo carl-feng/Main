@@ -122,7 +122,7 @@ void WorkThread()
         bool bRisk = false;
         if(!g_ForceAlarm)
         {
-            //bRisk = test.DoNext(testImage.data);
+            bRisk = test.DoNext(testImage.data);
             //USER_PRINT("going to check the image...\n");
             //bRisk = detect(jpgPath.c_str(), "truck_final.xml", 4);
             USER_PRINT("bRisk = %d, Threshold = %f\n", bRisk, param.fPercentageThreshold); 
