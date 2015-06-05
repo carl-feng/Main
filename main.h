@@ -92,6 +92,7 @@ void RestartSystem(enum RestartReason reason)
     sprintf(buffer, "echo \"[`date`] reason = %d\" >> /root/reason\n", reason);
     system(buffer);
     g_bForceExit = true;
+    system("sync");
     //system("./restart &");
     SendRestartOSCmd(10000);
     exit(-1);
@@ -267,7 +268,7 @@ fail:
     if(start == 0)
         start = time(NULL);
     now = time(NULL);
-    if(now - start > 3600)
+    if(now - start > 1800)
         RestartSystem(_3G_ERROR);
 
     USER_PRINT("3g connection lost.\n");
