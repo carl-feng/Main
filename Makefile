@@ -1,7 +1,7 @@
 cflags= -I/usr/include/jsoncpp -Wno-write-strings -fpermissive
 libs=-pthread -lboost_system -lboost_regex -lboost_thread -lcurl -ljsoncpp `pkg-config --libs opencv`
 
-all: Main mask_bmp watchdog capturejpg captureService testOnDemandRTSPServer rtsp2jpg
+all: Main mask_bmp watchdog capturejpg captureService testOnDemandRTSPServer rtsp2jpg addDate2Image
 
 mask_bmp: bitmap_image.hpp mask_bmp.cpp
 	g++ -o mask_bmp mask_bmp.cpp
@@ -47,6 +47,9 @@ captureService : captureService.cpp
 
 rtsp2jpg : rtsp2jpg.cpp
 	g++ -o rtsp2jpg rtsp2jpg.cpp -D__STDC_CONSTANT_MACROS -ljpeg -lavformat -lavfilter  -lavcodec -lswscale
+
+addDate2Image : addDate2Image.cpp
+	g++ -o addDate2Image addDate2Image.cpp `pkg-config --libs opencv` `pkg-config --cflags opencv`
 
 testOnDemandRTSPServer : testOnDemandRTSPServer.cpp
 	g++ -o testOnDemandRTSPServer testOnDemandRTSPServer.cpp -lx264 -lzmq -I/usr/local/include/liveMedia/ -I/usr/local/include/BasicUsageEnvironment/ -I/usr/local/include/groupsock/ -I/usr/local/include/UsageEnvironment  /usr/local/lib/libliveMedia.a /usr/local/lib/libgroupsock.a /usr/local/lib/libBasicUsageEnvironment.a /usr/local/lib/libUsageEnvironment.a

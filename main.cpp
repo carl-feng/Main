@@ -150,6 +150,9 @@ void WorkThread()
             nRiskCount = 0;
             USER_PRINT("detected risk %d tims persistently, start to alarm\n", 
                 risk_count);
+            char buffer[100] = {0};
+            snprintf(buffer, 100, "./addDate2Image %s", jpgPath.c_str());
+            system(buffer);
             bool ret = UploadPicture(jpgPath);
             if(ret)
             {
