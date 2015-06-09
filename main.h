@@ -268,7 +268,7 @@ fail:
     if(start == 0)
         start = time(NULL);
     now = time(NULL);
-    if(now - start > 1800)
+    if(now - start > 600)
         RestartSystem(_3G_ERROR);
 
     USER_PRINT("3g connection lost.\n");
