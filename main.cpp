@@ -459,33 +459,26 @@ int main( int argc, char* argv[] )
         time_t now = time(NULL);
         struct tm *pTM = localtime(&now);
         static int hour = 0;
+        static bool bSent = false;
         
         if(pTM->tm_hour != hour)
         {
             if(alarm_voltage < CUtil::ini_query_float("init", "alarm_voltage", -1))
             {
                 CUtil::SetAlarmStatus(false);
-                if(CUtil::GetSendSMSStatus())
+                if(CUtil::GetSendSMSStatus() && !bSent)
                 {
                     USER_PRINT("solar battery voltage is too slow to stop alarm.\n");
-                    vector<string> vPhoneNumbers = CUtil::GetPhoneNumber();
-                    USER_PRINT("start to send sms to [%d] people ...\n", vPhoneNumbers.size());
-                    for(unsigned int i = 0; i < vPhoneNumbers.size(); i++)
-                    {
-                        bool ret = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation() + " 电池电压过低!!!");
-                        if(ret)
-                        {
-                            USER_PRINT("send sms success.\n");
-                        }
-                        else 
-                        {
-                            USER_PRINT("send sms failed.\n");
-                        }
-                    }
+                    SendAllSMS("电池电压过低!!!");
+                    bSent = true;
                 }
             }
             else
+            {
                 CUtil::SetAlarmStatus(true);
+                SendAllSMS("电池电压恢复!!!");
+                bSent = false;
+            }
         }
         hour = pTM->tm_hour;
 

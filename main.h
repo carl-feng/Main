@@ -176,6 +176,24 @@ bool SendSMS(string phoneNum, string text)
     return ret == 0;
 }
 
+bool SendAllSMS(string text)
+{                
+    vector<string> vPhoneNumbers = CUtil::GetPhoneNumber();
+    USER_PRINT("start to send sms to [%d] people ...\n", vPhoneNumbers.size());
+    for(unsigned int i = 0; i < vPhoneNumbers.size(); i++)
+    {
+        bool ret = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation() + " " +text);
+        if(ret)
+        {
+            USER_PRINT("send sms success.\n");
+        }
+        else 
+        {
+            USER_PRINT("send sms failed.\n");
+        }
+    }
+}
+
 bool ReadSMS(vector<string> & vSMS)
 {
     USER_PRINT("enter ReadSMS\n");
