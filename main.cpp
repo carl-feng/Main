@@ -473,7 +473,7 @@ int main( int argc, char* argv[] )
                     bSent = true;
                 }
             }
-            else
+            else if (false == CUtil::GetAlarmStatus() && bSent)
             {
                 CUtil::SetAlarmStatus(true);
                 SendAllSMS("电池电压恢复!!!");
