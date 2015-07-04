@@ -61,7 +61,7 @@ int main()
     // 1. create .ngrok
     CreateNgrokConfigFile();
 
-    static int sleepTime = 30;
+    static int sleepTime = 5;
     while(true)
     {
         // 2. check the captureService
@@ -124,8 +124,10 @@ int main()
             }
         }
         else
-            sleepTime = 30;
-            
+        {
+            USER_PRINT("3G disconnected, sleep a short time to check again\n");
+            sleepTime = 5;
+        } 
 
         // 8. check the ngrok
         pid = CUtil::FindPidByName(NGROK_NAME);

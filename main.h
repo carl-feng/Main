@@ -128,7 +128,8 @@ void SendProxyInfo()
 
 void HeartBeatThread()
 {
-    int sec = CUtil::ini_query_int("Global", "HeartBeat", 60);
+    int sec = CUtil::ini_query_int("Global", "HeartBeat", 50);
+    int i = 0;
     while(!g_bForceExit)
     {
         USER_PRINT("Send heart beat ...\n");
@@ -138,7 +139,7 @@ void HeartBeatThread()
         USER_PRINT("AP status (%d)\n", status);
         
         SendProxyInfo();
-        int temp = sec;
+        int temp = i++ < 60 ? 2 : sec;
         while(temp--)
         {
             sleep(1);
