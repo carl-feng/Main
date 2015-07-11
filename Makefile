@@ -6,8 +6,8 @@ all: Main mask_bmp watchdog capturejpg captureService testOnDemandRTSPServer rts
 mask_bmp: bitmap_image.hpp mask_bmp.cpp
 	g++ -o mask_bmp mask_bmp.cpp
 
-Main: rs232.o powermgt.o Util.o  main.o  server.o minIni.o  mongoose.o backup.o ComputerVisionInterface.o 
-	g++ -o Main rs232.o powermgt.o Util.o main.o  server.o minIni.o  mongoose.o backup.o ComputerVisionInterface.o ${libs}
+Main: rs232.o powermgt.o Util.o  main.o  server.o minIni.o  mongoose.o backup.o detect.o 
+	g++ -o Main rs232.o powermgt.o Util.o main.o  server.o minIni.o  mongoose.o backup.o detect.o ${libs}
 
 ComputerVisionInterface.o : ComputerVisionInterface.h ComputerVisionInterface.cpp
 	g++ -c ComputerVisionInterface.cpp ${cflags}
@@ -17,6 +17,9 @@ rs232.o : rs232.h rs232.c Util.h
 
 backup.o : backup.cpp
 	g++ -c backup.cpp
+
+detect.o : detect.cpp
+	g++ -c detect.cpp `pkg-config --cflags opencv`
 
 powermgt.o : powermgt.h powermgt.cpp Util.h log.h
 	g++ -c powermgt.cpp ${cflags}

@@ -12,14 +12,21 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/thread.hpp>
-#include "ComputerVisionInterface.h"
+#include "opencv2/opencv.hpp"
+#include "opencv2/objdetect/objdetect.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/contrib/contrib.hpp"
 #include "powermgt.h"
+
+using namespace cv;
 
 bool g_ForceAlarm = false;
 string curPath;
 
 extern bool backup_pic(string path);
 bool detect_2(const char* image_filename, bool bFirst);
+extern void ReadandTrain(Mat img);
+extern bool TargetDetection(Mat img,int Pixel_Threshold, bool update_bg_model);
 
 void CameraPower(int index, bool enable)
 {
@@ -83,6 +90,7 @@ void WorkThread()
 
         // 2. power on camera0
         CameraPower(0, true);
+again:
 
         // 3. take pictures
         USER_PRINT("start to capture picture ...\n");
@@ -98,34 +106,42 @@ void WorkThread()
         }
 
         USER_PRINT("capture picture success\n");
- 
-        // 4. power off camera0
-        CameraPower(0, false);
-
-        // 5. check the picture
+        
+        // 4. check the picture
         bool bRet = CheckCamera0(jpgPath);
         if(!bRet) RestartSystem(CAMERA0_CHECK_ERROR);
         backup_pic(jpgPath);
         USER_PRINT("camera works well\n");
         
+        static bool bInitModel = false;
+        static int count = 0;
+        Mat testImage = imread(jpgPath.c_str());
+        if(!bInitModel)
+        {
+            count++;
+            ReadandTrain(testImage);
+            if(count > 20)
+            {
+                USER_PRINT("finished model training.%%%%%%%%%%%%%%%%%%%%%%%%\n");
+                bInitModel = true;
+                sleep(10);
+            }
+            
+            goto again;
+        }
+ 
+        // 5. power off camera0
+        CameraPower(0, false);
+
+        
         // 6. analyze the picuture
-        COMPUTER_VISION_PARAM param;
-        param.fPercentageThreshold = CUtil::CalculateCarPercentage();
-        param.fScoreThreshold = 0.0;
-        param.fThreshold = CUtil::ini_query_float("init", "threshold", 0.5);
-        param.nInputImageHeight = 720;
-        param.nInputImageWidth = 576;
-        sprintf(param.sMaskImageFileName,"./mask.bmp");
-        Mat testImage = imread(jpgPath.c_str(), 1);
-        ComputerVisionInterface test;
-        test.InitInterface(param);
+        int threshold = 100;//CUtil::CalculateCarPercentage();
         bool bRisk = false;
         if(!g_ForceAlarm)
         {
-            bRisk = test.DoNext(testImage.data);
-            //USER_PRINT("going to check the image...\n");
-            //bRisk = detect(jpgPath.c_str(), "truck_final.xml", 4);
-            USER_PRINT("bRisk = %d, Threshold = %f\n", bRisk, param.fPercentageThreshold); 
+            USER_PRINT("going to check the image...\n");
+            bRisk = TargetDetection(testImage, threshold, false);
+            USER_PRINT("bRisk = %d, threshold = %d\n", bRisk, threshold); 
         }
         // 7. upload picture if needed
         USER_PRINT("g_ForceAlarm = %d\n", g_ForceAlarm); 
