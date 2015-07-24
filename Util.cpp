@@ -262,7 +262,8 @@ void CUtil::ChangeAPSSIDIfNeeded()
     string ssid = ini.gets("", "ssid", "CHINANDY");
     string deviceID, suffix;
     GenerateDeviceID(deviceID);
-    if(!boost::algorithm::starts_with(ssid, "CHINANDY")) ssid = "CHINANDY";
+    if(!boost::algorithm::starts_with(ssid, "CHINANDY") || ssid.length() != 13)
+        ssid = "CHINANDY";
     suffix = boost::algorithm::to_upper_copy(deviceID.substr(8)); 
     if(!boost::algorithm::ends_with(ssid, suffix))
     {
