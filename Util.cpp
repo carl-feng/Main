@@ -275,32 +275,11 @@ void CUtil::ChangeAPSSIDIfNeeded()
     }
 }
 
-bool CUtil::CreateMaskBmp()
+float CUtil::CalculateCarThreshold()
 {
-    char buf[1024] = {0};
-    int left = CUtil::ini_query_int("init", "left", 0);
-    int up = CUtil::ini_query_int("init", "up", 0);
-    int right = CUtil::ini_query_int("init", "right", 0);
-    int down = CUtil::ini_query_int("init", "down", 0);
-    if((left < right) && (up < down) && (right <= 720) && (down <= 576))
-    {
-        snprintf(buf, 1024, "./mask_bmp 720 576 %d %d %d %d", left, up, right, down);
-        return (0 == system(buf));
-    }
-    return false;
-}
-
-float CUtil::CalculateCarPercentage()
-{
-    float left = CUtil::ini_query_float("init", "left", 0);
-    float up = CUtil::ini_query_float("init", "up", 0);
-    float right = CUtil::ini_query_float("init", "right", 0);
-    float down = CUtil::ini_query_float("init", "down", 0);
-    
-    float carl_width = CUtil::ini_query_float("init", "alarm_threshold_width", 0);
-    float carl_height = CUtil::ini_query_float("init", "alarm_threshold_height", 0);
-    float result = (carl_width*carl_height)/((right-left)*(down-up));
-    //USER_PRINT("%f, %f, %f, %f, %f, %f, %f\n", up, down, right, left, carl_width, carl_height, result);
+    float car_width = CUtil::ini_query_float("init", "alarm_threshold_width", 0);
+    float car_height = CUtil::ini_query_float("init", "alarm_threshold_height", 0);
+    float result = car_width*car_height;
     return result;
 }
 

@@ -4,6 +4,7 @@
 #include <string>
 #include <cstring>
 #include <unistd.h>
+#include <time.h>
 
 int main(int argc, char * argv[])
 {
@@ -49,10 +50,13 @@ int main(int argc, char * argv[])
         return 0;
     }
     char szMsg[10] = {0};
-    for(int i = 0; i < 3; i++)
+    if(strcmp("refresh", argv[2]) == 0)
     {
-        zmq_send(pSock, "YUYV", 4, 0);
-        zmq_recv(pSock, szMsg, sizeof(szMsg), 0);
+        for(int i = 0; i < 3; i++)
+        {
+            zmq_send(pSock, "YUYV", 4, 0);
+            zmq_recv(pSock, szMsg, sizeof(szMsg), 0);
+        }
     }
     printf("filename = %s\n", argv[1]);
     if(zmq_send(pSock, argv[1], strlen(argv[1]), 0) < 0)

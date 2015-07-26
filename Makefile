@@ -1,10 +1,7 @@
 cflags= -I/usr/include/jsoncpp -Wno-write-strings -fpermissive
 libs=-pthread -lboost_system -lboost_regex -lboost_thread -lcurl -ljsoncpp `pkg-config --libs opencv`
 
-all: Main mask_bmp watchdog capturejpg captureService testOnDemandRTSPServer rtsp2jpg addDate2Image
-
-mask_bmp: bitmap_image.hpp mask_bmp.cpp
-	g++ -o mask_bmp mask_bmp.cpp
+all: Main watchdog capturejpg captureService testOnDemandRTSPServer rtsp2jpg addDate2Image
 
 Main: rs232.o powermgt.o Util.o  main.o  server.o minIni.o  mongoose.o backup.o detect.o 
 	g++ -o Main rs232.o powermgt.o Util.o main.o  server.o minIni.o  mongoose.o backup.o detect.o ${libs}

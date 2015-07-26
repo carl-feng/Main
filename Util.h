@@ -95,7 +95,6 @@ public:
 
     static bool GenerateDeviceID(string& deviceID);
     static void ChangeAPSSIDIfNeeded();
-    static bool CreateMaskBmp();
     static void OpenAP();
     static void CloseAP();
 
@@ -247,7 +246,7 @@ public:
     static bool RemovePhoneNumber(string phoneNumber);
     static vector<string> GetPhoneNumber();
 
-    static float CalculateCarPercentage();
+    static float CalculateCarThreshold();
     static int FindPidByName(char* pName);
     static int Exec(char* path, char* arg, bool sync);
     static bool isFileExist(const char* file);

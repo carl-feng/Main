@@ -22,11 +22,12 @@ using namespace cv;
 
 bool g_ForceAlarm = false;
 string curPath;
+string strMode("no-refresh");
 
 extern bool backup_pic(string path);
 bool detect_2(const char* image_filename, bool bFirst);
 extern void ReadandTrain(Mat img);
-extern bool TargetDetection(Mat img,int Pixel_Threshold, bool update_bg_model);
+extern bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model);
 
 void CameraPower(int index, bool enable)
 {
@@ -50,7 +51,7 @@ bool CapturePic(int index, string& jpgPath)
     jpgPath += "/";
     jpgPath += buffer;
     if(index == 0)
-        snprintf(cmd, 256, "./capturejpg %s > /dev/null 2>&1", jpgPath.c_str());
+        snprintf(cmd, 256, "./capturejpg %s %s > /dev/null 2>&1", jpgPath.c_str(), strMode.c_str());
     else
     {
         snprintf(cmd, 256, "./rtsp2jpg rtsp://192.168.1.60:554/1/h264minor %s \
@@ -115,16 +116,20 @@ again:
         
         static bool bInitModel = false;
         static int count = 0;
+        int left = CUtil::ini_query_int("init", "left", 0);
+        int up = CUtil::ini_query_int("init", "up", 0);
+        int right = CUtil::ini_query_int("init", "right", 0);
+        int down = CUtil::ini_query_int("init", "down", 0);
         Mat testImage = imread(jpgPath.c_str());
         if(!bInitModel)
         {
             count++;
-            ReadandTrain(testImage);
-            if(count > 20)
+            ReadandTrain(testImage(Rect(left, up, right - left, down - up)));
+            if(count > 200)
             {
                 USER_PRINT("finished model training.%%%%%%%%%%%%%%%%%%%%%%%%\n");
                 bInitModel = true;
-                sleep(10);
+                strMode = "refresh";
             }
             
             goto again;
@@ -135,12 +140,13 @@ again:
 
         
         // 6. analyze the picuture
-        int threshold = 100;//CUtil::CalculateCarPercentage();
+        int threshold = (int)CUtil::CalculateCarThreshold();
         bool bRisk = false;
         if(!g_ForceAlarm)
         {
             USER_PRINT("going to check the image...\n");
-            bRisk = TargetDetection(testImage, threshold, false);
+            bRisk = TargetDetection(testImage(Rect(left, up, right - left, down - up)), 
+                    threshold, false);
             USER_PRINT("bRisk = %d, threshold = %d\n", bRisk, threshold); 
         }
         // 7. upload picture if needed
@@ -462,8 +468,6 @@ int main( int argc, char* argv[] )
     boost::thread workthrd(&WorkThread);
     boost::thread workthrd2(&WorkThread_2);
     
-    if(!CUtil::CreateMaskBmp()) USER_PRINT("create mask bitmap failed\n");
- 
     while(!g_bForceExit)
     {
         if(!Check3G()) USER_PRINT("3G connection lost ...\n");

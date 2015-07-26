@@ -8,61 +8,14 @@
 
 using namespace std;
 using namespace cv;
-const double PI=3.141592654;
-double  maxArea=0;
-double  area=0;
-int largestComp=0;
+const double PI = 3.141592654;
+double area = 0;
+int largestComp = 0;
 
-//int i=-1;
-bool update_bg_model = true;
- 
-int num1;
-int num2;
-
-int Pixel_Threshold = 100;
-int PicNum=0;
+bool update_bg_model = true; 
+int PicNum = 0;
 
 BackgroundSubtractorMOG2 bg_model;
-
-void refineSegments(const Mat& img, Mat& mask, Mat& dst)
-{
-    int niters = 3;
-
-    vector<vector<Point> > contours;
-    vector<Vec4i> hierarchy;
-
-    Mat temp;
-
-    dilate(mask, temp, Mat(), Point(-1,-1), niters);
-    erode(temp, temp, Mat(), Point(-1,-1), niters*2);
-    dilate(temp, temp, Mat(), Point(-1,-1), niters);
-
-    findContours( temp, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE );
-
-    dst = Mat::zeros(img.size(), CV_8UC3);
-
-    if( contours.size() == 0 )
-        return;
-
-    int idx = 0, largestComp = 0;
-    double maxArea = 0;
-
-	 for( ; idx <=contours.size()-1; idx =idx+1 )
-    {
-		float radius; 
-        Point2f center; 
-        minEnclosingCircle(Mat(contours[idx]), center, radius);
-	    area=PI*radius*radius;
-
-        if( area > maxArea )
-        {
-            maxArea = area;
-            largestComp = idx;
-        }
-    }
-    Scalar color( 0, 255, 0 );
-    drawContours( dst, contours, largestComp, color, CV_FILLED, 8, hierarchy );
-}
 
 void drawDetectLines(Mat& image, const vector<Vec4i>& lines, Scalar& color) 
 { 
@@ -70,48 +23,54 @@ void drawDetectLines(Mat& image, const vector<Vec4i>& lines, Scalar& color)
     while(it!=lines.end()) 
     { 
         Point pt1((*it)[0],(*it)[1]); 
-        Point pt2((*it)[2],(*it)[3]); 
-        line(image,pt1,pt2,color,2);
+        Point pt2((*it)[2],(*it)[3]);
+        line(image,pt1,pt2,Scalar(0,255,0),2);
         ++it; 
     } 
-} 
+}
 
-bool TargetDetection(Mat img,int Pixel_Threshold, bool update_bg_model)
+bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model)
 {
-	bool Danger_Flag=false;
-    Mat fgmask, fgimg;
+    int niters = 3;
+    bool Danger_Flag=false;
+    Mat temp, fgmask, fgimg;
+    vector<vector<Point> > contours;
+    vector<Vec4i> hierarchy;
 
     bg_model(img, fgmask, update_bg_model ? 0.005 : 0);
-    refineSegments(img, fgmask, fgimg);
 
-	//imshow("image", img);
-	//imshow("foreground image", fgimg);
+    if(update_bg_model) return false;
 
-	cvtColor(fgimg,fgimg,CV_BGR2GRAY);
+    dilate(fgmask, temp, Mat(), Point(-1,-1), niters);
+    erode(temp, temp, Mat(), Point(-1,-1), niters*2);
+    dilate(temp, temp, Mat(), Point(-1,-1), niters);
 
-    num1=countNonZero(fgimg);
-    printf("num1 = %d\n", num1);
-    
-    Mat edege; 
-    Canny(fgimg,edege,125,350); 
-    threshold(edege,edege,128,255,THRESH_BINARY);
-    //imshow("Canny Image",edege);
+    findContours(temp, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
 
-    vector<Vec4i> lines;
-    Scalar scalar(255,0,0);
-    HoughLinesP(edege, lines, 1, CV_PI/180, 80, 30, 10);
-    //drawDetectLines(fgimg, lines, scalar); 
-    //imshow("line",fgimg);
+    fgimg = Mat::zeros(img.size(), CV_8UC3);
 
-	if((num1>Pixel_Threshold) || lines.size() > 0)
-	{
-		Danger_Flag=true;
-	}
-	else
-	{
-		Danger_Flag=false;
-	}
-	return Danger_Flag;
+    if(contours.size() == 0)
+        return 0;
+
+    int idx = 0, largestComp = 0;
+    for(; idx <= contours.size() -1 ; idx =idx+1)
+    {
+        double  nowArea=0;
+        vector<Point> hull; 
+        convexHull(Mat(contours[idx]), hull);
+        area = contourArea(hull);
+
+        if (area > Pixel_Threshold)
+        {
+            //largestComp = idx;
+            //nowArea=area;
+            //Scalar color(0, 255, 0);
+            //drawContours(fgimg, contours, largestComp, color, CV_FILLED, 8, hierarchy);
+            Danger_Flag=true;
+         }
+    }
+
+    return Danger_Flag;
 }
 
 void ReadandTrain(Mat img)

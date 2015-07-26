@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>  
 #include <dirent.h>  
 #include <sys/types.h> 
@@ -139,7 +140,7 @@ void HeartBeatThread()
         USER_PRINT("AP status (%d)\n", status);
         
         SendProxyInfo();
-        int temp = i++ < 60 ? 2 : sec;
+        int temp = i++ < 40 ? 2 : sec;
         while(temp--)
         {
             sleep(1);
@@ -307,6 +308,14 @@ bool CheckCamera0(string path)
                 CUtil::SaveCameraStatus(0, true);
             return true;
         }
+        else
+        {
+            USER_PRINT("check camera 0, jpg file size = %ldKB\n", st.st_size/1024);
+        }
+    }
+    else
+    {
+        USER_PRINT("check camera 0, jpg file stat error = %s\n", strerror(errno));
     }
     CUtil::SaveCameraStatus(0, false);
     USER_PRINT("CheckCamera0 failed\n");
