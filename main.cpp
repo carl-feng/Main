@@ -479,25 +479,13 @@ int main( int argc, char* argv[] )
         time_t now = time(NULL);
         struct tm *pTM = localtime(&now);
         static int hour = 0;
-        static bool bSent = false;
         
         if(pTM->tm_hour != hour)
         {
             if(alarm_voltage < CUtil::ini_query_float("init", "alarm_voltage", -1))
             {
-                CUtil::SetAlarmStatus(false);
-                if(CUtil::GetSendSMSStatus() && !bSent)
-                {
-                    USER_PRINT("solar battery voltage is too slow to stop alarm.\n");
-                    SendAllSMS("电池电压过低!!!");
-                    bSent = true;
-                }
-            }
-            else if (false == CUtil::GetAlarmStatus() && bSent)
-            {
-                CUtil::SetAlarmStatus(true);
-                SendAllSMS("电池电压恢复!!!");
-                bSent = false;
+                // report to watchdog board, and shutdown main board to charge battery.
+                
             }
         }
         hour = pTM->tm_hour;
