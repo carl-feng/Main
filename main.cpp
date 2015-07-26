@@ -125,7 +125,7 @@ again:
         {
             count++;
             ReadandTrain(testImage(Rect(left, up, right - left, down - up)));
-            if(count > 200)
+            if(count > CUtil::ini_query_int("global", "train_frame", 200))
             {
                 USER_PRINT("finished model training.%%%%%%%%%%%%%%%%%%%%%%%%\n");
                 bInitModel = true;
