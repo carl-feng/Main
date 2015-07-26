@@ -50,13 +50,19 @@ int main(int argc, char * argv[])
         return 0;
     }
     char szMsg[10] = {0};
+    int num = 3;
     if(strcmp("refresh", argv[2]) == 0)
     {
-        for(int i = 0; i < 3; i++)
-        {
-            zmq_send(pSock, "YUYV", 4, 0);
-            zmq_recv(pSock, szMsg, sizeof(szMsg), 0);
-        }
+        num = 3;
+    }
+    else
+    {
+        num = 1;
+    }
+    for(int i = 0; i < num; i++)
+    {
+        zmq_send(pSock, "YUYV", 4, 0);
+        zmq_recv(pSock, szMsg, sizeof(szMsg), 0);
     }
     printf("filename = %s\n", argv[1]);
     if(zmq_send(pSock, argv[1], strlen(argv[1]), 0) < 0)
