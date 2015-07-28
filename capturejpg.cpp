@@ -5,11 +5,35 @@
 #include <cstring>
 #include <unistd.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+
+int get_lock(void)
+{
+    int fdlock;
+    struct flock fl;
+    fl.l_type = F_WRLCK;
+    fl.l_whence = SEEK_SET;
+    fl.l_start = 0;
+    fl.l_len = 1;
+    if((fdlock = open("/tmp/capturejpg.lock", O_WRONLY|O_CREAT, 0666)) == -1)
+        return 0;
+    if(fcntl(fdlock, F_SETLK, &fl) == -1)
+        return 0;
+    return 1;
+}
 
 int main(int argc, char * argv[])
 {
     void * pCtx = NULL;
     void * pSock = NULL;
+
+    while(!get_lock())
+    {
+        printf("another instance(capturejpg) is running, retry later...\n");
+        sleep(1);
+    }
     //通信使用的网络端口 为7766 
     const char * pAddr = "tcp://localhost:7766";
 
@@ -71,6 +95,7 @@ int main(int argc, char * argv[])
         return -1;
     }
     zmq_recv(pSock, szMsg, sizeof(szMsg), 0);
+    usleep(100000);
     printf("capture finished\n");
     if(strcmp(szMsg, "OK") == 0) 
         return 0;
