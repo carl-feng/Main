@@ -81,7 +81,7 @@ int main(int argc, char * argv[])
     }
     else
     {
-        num = 1;
+        num = 3;
     }
     for(int i = 0; i < num; i++)
     {
@@ -95,7 +95,7 @@ int main(int argc, char * argv[])
         return -1;
     }
     zmq_recv(pSock, szMsg, sizeof(szMsg), 0);
-    usleep(100000);
+    //usleep(100000);
     printf("capture finished\n");
     if(strcmp(szMsg, "OK") == 0) 
         return 0;
