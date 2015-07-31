@@ -1,0 +1,17 @@
+#!/bin/bash
+
+cd /root/Main
+
+if [ -e "/root/Main/version.txt" ]; then
+
+    flag=`git pull | grep "up-to-date" | wc -l`
+    if [ $flag != "1" ]; then
+        echo "[`date`] need update" >> /root/update.log
+        make && sync
+        reboot
+    else
+        echo "[`date`] no update" >> /root/update.log
+    fi
+else
+    echo "[`date`] no version.txt, skip update" >> /root/update.log
+fi

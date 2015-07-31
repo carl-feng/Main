@@ -401,7 +401,7 @@ bool CUtil::CheckProxyServer()
 string CUtil::CheckVersion()
 {
     boost::unique_lock<boost::mutex> lock(m);
-    minIni ini("/root/au/version.conf");
+    minIni ini("/root/Main/version.txt");
     string ssid = ini.gets("", "version", "1");
     return ssid;
 }
