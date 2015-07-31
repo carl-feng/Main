@@ -4,8 +4,8 @@ cd /root/Main
 
 if [ -e "/root/Main/version.txt" ]; then
 
-    flag=`git pull | grep "up-to-date" | wc -l`
-    if [ $flag != "1" ]; then
+    flag=`git pull | grep "Updating" | wc -l`
+    if [ $flag = "1" ]; then
         echo "[`date`] need update" >> /root/update.log
         make && sync
         reboot
