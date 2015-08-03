@@ -53,7 +53,7 @@ post=`cat << EOF
   <s:Body>
     <tptz:$action>
       <tptz:ProfileToken>MainStream</tptz:ProfileToken>
-      <tptz:PresetToken>1</tptz:PresetToken>
+      <tptz:PresetToken>$speed</tptz:PresetToken>
     </tptz:$action>
   </s:Body>
 </s:Envelope>
