@@ -114,7 +114,6 @@ again:
         // 4. check the picture
         bool bRet = CheckCamera0(jpgPath);
         if(!bRet) RestartSystem(CAMERA0_CHECK_ERROR);
-        backup_pic(jpgPath);
         USER_PRINT("camera works well\n");
         
         int left = CUtil::ini_query_int("init", "left", 0);
@@ -126,7 +125,7 @@ again:
         {
             g_Count++;
             ReadandTrain(testImage(Rect(left, up, right - left, down - up)));
-            if(g_Count > CUtil::ini_query_int("global", "train_frame", 20))
+            if(g_Count > CUtil::ini_query_int("global", "train_frame", 200))
             {
                 USER_PRINT("finished model training.**********************\n");
                 g_bInitModel = true;
@@ -148,13 +147,14 @@ again:
         {
             USER_PRINT("going to check the image...\n");
             bRisk = TargetDetection(testImage(Rect(left, up, right - left, down - up)), threshold, false);
-            USER_PRINT("bRisk = %d, threshold = %d\n", bRisk, threshold); 
+            USER_PRINT(">>>>>> bRisk = %d, threshold = %d\n", bRisk, threshold); 
         }
         // 7. upload picture if needed
         USER_PRINT("g_ForceAlarm = %d\n", g_ForceAlarm); 
         if(bRisk || g_ForceAlarm)
         {
             USER_PRINT("detected risk.\n");
+            backup_pic(jpgPath);
             nRiskCount++;
         }
         else
@@ -168,7 +168,7 @@ again:
         int alarm_count = CUtil::GetAlarmCount();
         USER_PRINT("nRiskCount = %d/%d, nSendCount = %d/%d\n", nRiskCount, 
             risk_count, nSendCount, alarm_count); 
-        if(nRiskCount != 0 && (nRiskCount%risk_count == 0))
+        if(nRiskCount != 0 && (nRiskCount%risk_count == 0) && (nSendCount != alarm_count))
         {
             nRiskCount = 0;
             USER_PRINT("detected risk %d tims persistently, start to alarm\n", 
@@ -176,35 +176,15 @@ again:
             char buffer[100] = {0};
             snprintf(buffer, 100, "./addDate2Image %s", jpgPath.c_str());
             system(buffer);
+            string imgUrl;
             bool ret = UploadPicture(jpgPath);
             if(ret)
             {
-                string imgUrl;
                 USER_PRINT("upload picture success\n");
                 g_ForceAlarm = false;
                 if(SendAlarmInfo(jpgPath, imgUrl))
                 {
                     USER_PRINT("sent alarm success\n");
-                    if(CUtil::GetSendSMSStatus())
-                    {
-                        vector<string> vPhoneNumbers = CUtil::GetPhoneNumber();
-                        USER_PRINT("start to send sms to [%d] people ...\n", 
-                            vPhoneNumbers.size());
-                        for(unsigned int i = 0; i < vPhoneNumbers.size(); i++)
-                        {
-                            ret = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation() + 
-                                " 有危险车辆驻留!!! " + imgUrl);
-                            if(ret) {USER_PRINT("send sms success.\n");} 
-                            else {USER_PRINT("send sms failed.\n");}
-                        }
-                        if(++nSendCount == alarm_count)
-                        {
-                            USER_PRINT("sent sms %d times persistently, \
-                                dont' send next cycle.\n", alarm_count);
-                            CUtil::SetSendSMSStatus(false);
-                            nSendCount = 0;
-                        }
-                    }
                 }
                 else
                 {
@@ -214,6 +194,25 @@ again:
             else
             {
                 USER_PRINT("upload picture failed\n");
+            }
+            if(CUtil::GetSendSMSStatus())
+            {
+                vector<string> vPhoneNumbers = CUtil::GetPhoneNumber();
+                USER_PRINT("start to send sms to [%d] people ...\n", 
+                    vPhoneNumbers.size());
+                for(unsigned int i = 0; i < vPhoneNumbers.size(); i++)
+                {
+                    ret = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation()
+                        + " 有危险车辆驻留!!! " + imgUrl);
+                    if(ret)
+                        {USER_PRINT("send sms success.\n");} 
+                    else
+                        {USER_PRINT("send sms failed.\n");}
+                }
+                if(++nSendCount == alarm_count)
+                {
+                    USER_PRINT("sent sms %d times persistently, don't send when still risk next cycle.\n", alarm_count);
+                }
             }
         }
 
