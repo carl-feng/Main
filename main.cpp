@@ -21,6 +21,9 @@
 using namespace cv;
 
 bool g_ForceAlarm = false;
+bool g_bInitModel = false;
+int g_Count = 0;
+
 string curPath;
 string strMode("no-refresh");
 
@@ -114,22 +117,21 @@ again:
         backup_pic(jpgPath);
         USER_PRINT("camera works well\n");
         
-        static bool bInitModel = false;
-        static int count = 0;
         int left = CUtil::ini_query_int("init", "left", 0);
         int up = CUtil::ini_query_int("init", "up", 0);
         int right = CUtil::ini_query_int("init", "right", 0);
         int down = CUtil::ini_query_int("init", "down", 0);
         Mat testImage = imread(jpgPath.c_str());
-        if(!bInitModel)
+        if(!g_bInitModel)
         {
-            count++;
+            g_Count++;
             ReadandTrain(testImage(Rect(left, up, right - left, down - up)));
-            if(count > CUtil::ini_query_int("global", "train_frame", 200))
+            if(g_Count > CUtil::ini_query_int("global", "train_frame", 20))
             {
-                USER_PRINT("finished model training.%%%%%%%%%%%%%%%%%%%%%%%%\n");
-                bInitModel = true;
+                USER_PRINT("finished model training.**********************\n");
+                g_bInitModel = true;
                 strMode = "refresh";
+                g_Count = 0;
             }
             
             goto again;
@@ -145,8 +147,7 @@ again:
         if(!g_ForceAlarm)
         {
             USER_PRINT("going to check the image...\n");
-            bRisk = TargetDetection(testImage(Rect(left, up, right - left, down - up)), 
-                    threshold, false);
+            bRisk = TargetDetection(testImage(Rect(left, up, right - left, down - up)), threshold, false);
             USER_PRINT("bRisk = %d, threshold = %d\n", bRisk, threshold); 
         }
         // 7. upload picture if needed
@@ -226,15 +227,18 @@ again:
             time_t now;
             time(&now);
             struct tm *pTM = localtime(&now);
-            if(pTM->tm_hour > 6 && pTM->tm_hour < 21)
+            int morning = CUtil::GetMorningInt();
+            int night = CUtil::GetNightInt();
+            USER_PRINT("morning = %d, night = %d.\n", morning, night);
+            if(pTM->tm_hour > morning && pTM->tm_hour < night)
                 sleepSec = CUtil::GetCheckInterval();
             else
                 sleepSec = CUtil::GetCheckInterval_Night();
             if(sleepSec > 0)
             {
                 USER_PRINT("Sleep %d seconds in WorkThread.\n", sleepSec);
-                while(!g_bForceExit && !g_ForceAlarm &&
-			 sleepSec-- && CUtil::GetAlarmStatus())
+                while(!g_bForceExit && !g_ForceAlarm && g_bInitModel &&
+			            sleepSec-- && CUtil::GetAlarmStatus())
                     sleep(1);
             }
         }

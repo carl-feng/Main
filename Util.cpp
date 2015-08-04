@@ -405,3 +405,23 @@ string CUtil::CheckVersion()
     string ssid = ini.gets("", "version", "1");
     return ssid;
 }
+
+int CUtil::GetMorningInt()
+{
+    return ini_query_int("init", "MorningInt", 6);
+}
+
+int CUtil::GetNightInt()
+{
+    return ini_query_int("init", "NightInt", 18);
+}
+
+bool CUtil::SetMorningInt(int morning)
+{
+    return ini_save_int("init", "MorningInt", morning);
+}
+
+bool CUtil::SetNightInt(int night)
+{
+    return ini_save_int("init", "NightInt", night);
+}

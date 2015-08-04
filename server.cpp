@@ -320,6 +320,25 @@ static int process_req(struct mg_connection *conn) {
             out["message"] = "";
         }
     }
+    else if (strcmp(conn->uri, "/check_time_period") == 0) {
+        Json::Value message, body;
+        Json::Reader reader;
+        if (reader.parse(conn->content, body) && body.isMember("night") && 
+            body.isMember("morning"))
+        {
+            int morning = body["morning"].asInt();
+            int night = body["night"].asInt();
+            CUtil::SetNightInt(night);
+            CUtil::SetMorningInt(morning);
+            out["error_code"] = SUCCESS_CODE;
+            out["error_message"] = "success";
+            out["message"] = "";
+        }else{
+            out["error_code"] = ERROR_CODE;
+            out["error_message"] = "parse json failed.";
+            out["message"] = "";
+        }
+    }
     else if (strcmp(conn->uri, "/camera_power_query") == 0) {
         Json::Value message;
         status s = CUtil::GetStatus();
@@ -350,6 +369,16 @@ static int process_req(struct mg_connection *conn) {
         message["enable"] = g_ForceAlarm ? "1" : "0";
         out["error_code"] = SUCCESS_CODE;
         out["error_message"] = "force alarm config success";
+        out["message"] = message;
+    }
+    else if (strcmp(conn->uri, "/force_train_bg") == 0) {
+        extern bool g_bInitModel;
+        Json::Value message;
+        g_bInitModel = false;
+        USER_PRINT(">> force train background later.\n");
+        message["enable"] = g_bInitModel ? "1" : "0";
+        out["error_code"] = SUCCESS_CODE;
+        out["error_message"] = "force train background success";
         out["message"] = message;
     }
     else if (strcmp(conn->uri, "/phonenumber") == 0) {

@@ -254,6 +254,10 @@ public:
     static bool CheckProxyServer();
     static string CheckVersion();
     static void BackupOrRestoreIni();
+    static int GetMorningInt();
+    static int GetNightInt();
+    static bool SetMorningInt(int morning);
+    static bool SetNightInt(int night);
 };
 
 #endif // _UTIL_H_

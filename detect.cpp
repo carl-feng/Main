@@ -59,7 +59,7 @@ bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model)
         vector<Point> hull; 
         convexHull(Mat(contours[idx]), hull);
         area = contourArea(hull);
-        printf("&&&&&&&&&&&&&&&&&&&& threshold = %d, area = %f\n", Pixel_Threshold, area);
+        printf("&&&&&&&&&& threshold = %d, area = %f\n", Pixel_Threshold, area);
         if (area > Pixel_Threshold)
         {
             //largestComp = idx;
