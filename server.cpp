@@ -1,4 +1,6 @@
 #include <iostream>
+#include <dirent.h>  
+#include <sys/stat.h>
 #include <string>
 #include <cstring>
 #include <vector>
@@ -18,6 +20,32 @@ extern bool g_bForceExit;
 extern void SaveLineThresholdThread();
 #define ERROR_CODE -1
 #define SUCCESS_CODE 0
+
+bool listdir(string dir, vector<string>& vFiles)
+{
+    DIR *dp;
+    struct dirent *entry;
+    char childpath[512] = {0};
+    
+    if((dp = opendir(dir.c_str())) == NULL) {
+        return false;
+    }
+    vFiles.clear();
+    while((entry = readdir(dp)) != NULL) {
+        if(entry->d_type & DT_DIR) {
+            if(strcmp(entry->d_name, ".")==0 || strcmp(entry->d_name, "..")==0)
+                continue;
+            sprintf(childpath,"%s/%s", dir.c_str(), entry->d_name);
+            listdir(childpath, vFiles);
+        }
+        if(entry->d_type & DT_REG) {
+            sprintf(childpath,"%s/%s", dir.c_str(), entry->d_name);
+            vFiles.push_back(childpath);
+        }
+    }
+    closedir(dp);
+    return true;
+}
 
 static int process_req(struct mg_connection *conn) {
     Json::Value out;
@@ -551,6 +579,32 @@ static int process_req(struct mg_connection *conn) {
 	    mg_send_header(conn, "Content-Type", "application/json;charset=utf-8");
 	    mg_printf_data(conn, strRet.c_str(), strlen(strRet.c_str()));
         return MG_TRUE;
+    }
+    else if (strcmp(conn->uri, "/getphoto") == 0) {
+        char category[10] = {0}, filepath[255] = {0};
+        char* cmd = NULL;
+        mg_get_var(conn, "category", category, sizeof(category));
+        if(strcmp(category, "all") == 0)
+        {
+            vector<string> vFiles;
+            out["error_code"] = SUCCESS_CODE;
+            out["error_message"] = "success.";
+            Json::Value message;
+            listdir("/mnt/tf", vFiles);
+            for(int i = 0; i < vFiles.size(); i++)
+                message["files"].append(vFiles.at(i));
+            out["message"] = message;
+        }
+        else if(strcmp(category, "single") == 0)
+        {
+            mg_get_var(conn, "filepath", filepath, sizeof(filepath));
+            mg_send_file(conn, filepath, NULL);
+            return MG_MORE;
+        }
+        else
+        {
+            return MG_FALSE;
+        }
     }
     else {
         USER_PRINT("invalid url request, url = %s\n", conn->uri);
