@@ -258,6 +258,7 @@ public:
     static int GetNightInt();
     static bool SetMorningInt(int morning);
     static bool SetNightInt(int night);
+    static void SyncDateTime();
 };
 
 #endif // _UTIL_H_

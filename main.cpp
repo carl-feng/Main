@@ -467,7 +467,9 @@ int main( int argc, char* argv[] )
         sleep(5);
     };
     USER_PRINT("3G connection is ready\n");
-    
+   
+    CUtil::SyncDateTime();
+ 
     boost::thread workthrd(&WorkThread);
     boost::thread workthrd2(&WorkThread_2);
     

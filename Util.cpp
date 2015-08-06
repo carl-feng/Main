@@ -425,3 +425,8 @@ bool CUtil::SetNightInt(int night)
 {
     return ini_save_int("init", "NightInt", night);
 }
+
+void CUtil::SyncDateTime()
+{
+    system("ntpdate pool.ntp.org");
+}
