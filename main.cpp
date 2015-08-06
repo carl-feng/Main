@@ -25,7 +25,6 @@ bool g_bInitModel = false;
 int g_Count = 0;
 
 string curPath;
-string strMode("no-refresh");
 
 extern bool backup_pic(string path);
 bool detect_2(const char* image_filename, bool bFirst);
@@ -54,7 +53,7 @@ bool CapturePic(int index, string& jpgPath)
     jpgPath += "/";
     jpgPath += buffer;
     if(index == 0)
-        snprintf(cmd, 256, "./capturejpg %s %s > /dev/null 2>&1", jpgPath.c_str(), strMode.c_str());
+        snprintf(cmd, 256, "./capturejpg %s > /dev/null 2>&1", jpgPath.c_str());
     else
     {
         snprintf(cmd, 256, "./rtsp2jpg rtsp://192.168.1.60:554/1/h264minor %s \
@@ -129,7 +128,6 @@ again:
             {
                 USER_PRINT("finished model training.**********************\n");
                 g_bInitModel = true;
-                strMode = "refresh";
                 g_Count = 0;
             }
             

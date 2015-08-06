@@ -517,7 +517,7 @@ static int process_req(struct mg_connection *conn) {
         mg_get_var(conn, "camera", buffer, sizeof(buffer));
         if(strcmp(buffer, "0") == 0)
         {
-            cmd = "./capturejpg camera0.jpg refresh > /dev/null 2>&1";
+            cmd = "./capturejpg camera0.jpg > /dev/null 2>&1";
             system(cmd);
             mg_send_file(conn, "camera0.jpg", NULL);
             remove("camera0.jpg");

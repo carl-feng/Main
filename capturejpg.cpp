@@ -74,16 +74,7 @@ int main(int argc, char * argv[])
         return 0;
     }
     char szMsg[10] = {0};
-    int num = 3;
-    if(strcmp("refresh", argv[2]) == 0)
-    {
-        num = 3;
-    }
-    else
-    {
-        num = 3;
-    }
-    for(int i = 0; i < num; i++)
+    for(int i = 0; i < 3; i++)
     {
         zmq_send(pSock, "YUYV", 4, 0);
         zmq_recv(pSock, szMsg, sizeof(szMsg), 0);
@@ -95,7 +86,6 @@ int main(int argc, char * argv[])
         return -1;
     }
     zmq_recv(pSock, szMsg, sizeof(szMsg), 0);
-    //usleep(100000);
     printf("capture finished\n");
     if(strcmp(szMsg, "OK") == 0) 
         return 0;

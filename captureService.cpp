@@ -421,7 +421,6 @@ next:
 			FILE* file = fopen(filename, "wb");
 			compress_yuyv_to_jpeg(capture_buffers[capture_buf.index].start, g_in_width, g_in_height, file, 90);
 			fclose(file);
-            system("sync");
 			printf("capture jpeg file %s\n", filename);
 		}
 		else
