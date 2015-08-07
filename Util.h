@@ -27,6 +27,8 @@ public:
     string risk_count;
     string check_interval;
     string check_interval_night;
+    string morning;
+    string night;
     string communicator_server;
     string tower_name;
 };

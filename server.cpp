@@ -240,6 +240,8 @@ static int process_req(struct mg_connection *conn) {
                 body["data"].isMember("risk_count") && body["data"]["risk_count"].isString() &&
                 body["data"].isMember("check_interval") && body["data"]["check_interval"].isString() &&
                 body["data"].isMember("check_interval_night") && body["data"]["check_interval_night"].isString() &&
+                body["data"].isMember("morning") && body["data"]["morning"].isString() &&
+                body["data"].isMember("night") && body["data"]["night"].isString() &&
                 body["data"].isMember("tower_name") && body["data"]["tower_name"].isString())
             {
                 configure c;
@@ -248,6 +250,8 @@ static int process_req(struct mg_connection *conn) {
                 c.check_interval = body["data"]["check_interval"].asCString();
                 c.check_interval_night = body["data"]["check_interval_night"].asCString();
                 c.communicator_server = body["data"]["communicator_server"].asCString();
+                c.morning = body["data"]["morning"].asCString();
+                c.night = body["data"]["night"].asCString();
                 CUtil::SetConfigure(c);
                 out["error_code"] = SUCCESS_CODE;
                 out["error_message"] = "paramconf success.";
