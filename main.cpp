@@ -490,6 +490,9 @@ int main( int argc, char* argv[] )
                 // report to watchdog board, and shutdown main board to charge battery.
                 
             }
+
+            // force train backgroud every one hour
+            g_bInitModel = false;
         }
         hour = pTM->tm_hour;
 
