@@ -269,7 +269,6 @@ bool Check3G()
     int nRetry = 3;
     static time_t start = 0, now;
     int ret = system("ifconfig | grep ppp0 > /dev/null 2>&1");
-    if(ret) goto fail;
 
     while(true)
     {
@@ -288,7 +287,7 @@ fail:
     if(start == 0)
         start = time(NULL);
     now = time(NULL);
-    if(now - start > 600)
+    if(now - start > 600 && !ret)
         RestartSystem(_3G_ERROR);
 
     USER_PRINT("3g connection lost.\n");
