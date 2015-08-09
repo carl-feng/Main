@@ -147,6 +147,7 @@ int main()
         delete_expired_pic();
 
         // 11. sleep 60s
+        system("echo [`date`] >> /root/watchdog.log");
         USER_PRINT("sleep %ds in watchdog process\n", sleepTime);
         sleep(sleepTime);
         if(sleepTime < 600)

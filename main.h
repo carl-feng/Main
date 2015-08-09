@@ -109,6 +109,7 @@ void ClearExpiredProxyInfo()
 
 void SendProxyInfo()
 {
+    char buffer[100];
     Json::Value root;
     root["device_id"] = CUtil::GetBoardID();
     root["tower_name"] = CUtil::GetLocation();
@@ -123,7 +124,11 @@ void SendProxyInfo()
     url += "http://";
     url += CUtil::ini_query_string("configure", "communicator_server", "czyhdli.com");
     url += ":9093/updateinfo";
+    time_t start = time(NULL);
     Post(url, root.toStyledString());
+    time_t end = time(NULL);
+    sprintf(buffer, "echo \"[`date`] time(%ld)\" >> /root/sendproxyinfo\n", end - start);
+    system(buffer);
     USER_PRINT("Sent proxy info to server ...\n");
 }
 

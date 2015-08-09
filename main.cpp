@@ -53,7 +53,11 @@ bool CapturePic(int index, string& jpgPath)
     jpgPath += "/";
     jpgPath += buffer;
     if(index == 0)
+    {
         snprintf(cmd, 256, "./capturejpg %s > /dev/null 2>&1", jpgPath.c_str());
+        //snprintf(cmd, 256, "./rtsp2jpg rtsp://localhost:8554/h264ESVideoTest %s \
+        //    > /dev/null 2>&1", jpgPath.c_str());
+    }
     else
     {
         snprintf(cmd, 256, "./rtsp2jpg rtsp://192.168.1.60:554/1/h264minor %s \
@@ -90,6 +94,7 @@ void WorkThread()
             continue;
         }
         USER_PRINT(">>>>>>>>>start to check the risk on camera0 ...\n");
+        system("echo [`date`] >> /root/work_thread.log");
 
         // 2. power on camera0
         CameraPower(0, true);
@@ -474,6 +479,8 @@ int main( int argc, char* argv[] )
     while(!g_bForceExit)
     {
         if(!Check3G()) USER_PRINT("3G connection lost ...\n");
+        
+        system("echo [`date`] >> /root/check_3G.log");
         
         SendSolarStatusCmd();
         double alarm_voltage = CUtil::GetBattery().battery_voltage;
