@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <map>
 #include <boost/thread.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include "Util.h"
 #include "log.h"
 #include "powermgt.h"
@@ -70,6 +71,8 @@ static int process_req(struct mg_connection *conn) {
         message["info"]["configure"]["risk_count"] = c.risk_count;
         message["info"]["configure"]["check_interval"] = c.check_interval;
         message["info"]["configure"]["check_interval_night"] = c.check_interval_night;
+        message["info"]["configure"]["morning"] = c.morning;
+        message["info"]["configure"]["night"] = c.night;
 
         status s = CUtil::GetStatus();
         message["info"]["state"]["wifi"] = s.wifi;
@@ -602,6 +605,10 @@ static int process_req(struct mg_connection *conn) {
         else if(strcmp(category, "single") == 0)
         {
             mg_get_var(conn, "filepath", filepath, sizeof(filepath));
+            if(!boost::algorithm::starts_with(filepath, "/mnt/tf"))
+            {
+                return MG_FALSE;
+            }
             mg_send_file(conn, filepath, NULL);
             return MG_MORE;
         }
