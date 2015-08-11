@@ -103,7 +103,8 @@ int main()
         }
 
         // 7. test proxy url
-        if(CUtil::Is3GEnabled())
+        int ret = system("ifconfig | grep ppp0 > /dev/null 2>&1");
+        if(ret == 0)
         {
             USER_PRINT("going to check the proxy server.\n");
             bool bConnected = false;
