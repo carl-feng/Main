@@ -134,7 +134,7 @@ again:
     system(buffer);
     if(!bRet)
     {
-        if(retry == 0)
+        if(retry-- == 0)
         {
             RestartSystem(SEND_PROXY_ERROR);
         }
