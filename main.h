@@ -79,7 +79,8 @@ enum RestartReason
     CAMERA1_CAPTURE_ERROR,
     CAMERA0_CHECK_ERROR,
     CAMERA1_CHECK_ERROR,
-    DAILY_RESTART
+    DAILY_RESTART,
+    SEND_PROXY_ERROR,
 };
 
 bool g_bForceExit = false;
@@ -125,10 +126,12 @@ void SendProxyInfo()
     url += CUtil::ini_query_string("configure", "communicator_server", "czyhdli.com");
     url += ":9093/updateinfo";
     time_t start = time(NULL);
-    Post(url, root.toStyledString());
+    bool bRet = Post(url, root.toStyledString());
     time_t end = time(NULL);
-    sprintf(buffer, "echo \"[`date`] time(%ld)\" >> /root/sendproxyinfo\n", end - start);
+    sprintf(buffer, "echo \"[`date`] time(%ld), bRet(%d)\" >> /root/sendproxyinfo\n", end - start, bRet);
     system(buffer);
+    if(!bRet)
+        RestartSystem(SEND_PROXY_ERROR);
     USER_PRINT("Sent proxy info to server ...\n");
 }
 
