@@ -152,7 +152,7 @@ again:
             USER_PRINT("going to check the image...\n");
             bRisk = TargetDetection(testImage(Rect(left, up, right - left, down - up)), threshold, false);
             USER_PRINT(">>>>>> bRisk = %d, threshold = %d\n", bRisk, threshold); 
-            sprintf(buffer, "echo \"[`date`] bRisk = %d, threshold = %d\" >> /root/detect.log", bRisk, threshold);
+            sprintf(buffer, "echo \"[`date`] bRisk = %d, threshold = %d, image = %s\" >> /root/detect.log", bRisk, threshold, jpgPath.c_str());
             system(buffer);
         }
         // 7. upload picture if needed
