@@ -98,6 +98,9 @@ void WorkThread()
 
         // 2. power on camera0
         CameraPower(0, true);
+        system("testRTSPClient  rtsp://192.168.11.1:8554/h264ESVideoTest &");
+        sleep(5);
+        system("killall testRTSPClient");
 again:
 
         // 3. take pictures

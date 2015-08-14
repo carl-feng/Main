@@ -74,7 +74,7 @@ int main(int argc, char * argv[])
         return 0;
     }
     char szMsg[10] = {0};
-    for(int i = 0; i < 3; i++)
+    for(int i = 0; i < 5; i++)
     {
         zmq_send(pSock, "YUYV", 4, 0);
         zmq_recv(pSock, szMsg, sizeof(szMsg), 0);
