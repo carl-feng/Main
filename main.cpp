@@ -98,9 +98,6 @@ void WorkThread()
 
         // 2. power on camera0
         CameraPower(0, true);
-        system("testRTSPClient  rtsp://192.168.11.1:8554/h264ESVideoTest &");
-        sleep(CUtil::ini_query_int("global", "wait_to_stable", 10));
-        system("killall testRTSPClient");
 again:
 
         // 3. take pictures
