@@ -91,7 +91,7 @@ void RestartSystem(enum RestartReason reason)
 {
     USER_PRINT( "going to restart, reason [%d]...\n", reason );
     char buffer[50] = {0};
-    sprintf(buffer, "echo \"[`date`] reason = %d\" >> /root/reason\n", reason);
+    sprintf(buffer, "echo \"[`date`] reason = %d\" >> /root/restart.log\n", reason);
     system(buffer);
     g_bForceExit = true;
     system("sync");
@@ -130,7 +130,7 @@ again:
     time_t start = time(NULL);
     bool bRet = Post(url, root.toStyledString());
     time_t end = time(NULL);
-    sprintf(buffer, "echo \"[`date`] time(%ld), bRet(%d)\" >> /root/sendproxyinfo\n", end - start, bRet);
+    sprintf(buffer, "echo \"[`date`] time(%ld), bRet(%d)\" >> /root/sendproxyinfo.log\n", end - start, bRet);
     system(buffer);
     if(!bRet)
     {
