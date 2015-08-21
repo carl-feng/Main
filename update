@@ -8,7 +8,7 @@ if [ -e "/root/Main/version.txt" ]; then
     if [ $flag = "1" ]; then
         echo "[`date`] need update" >> /root/update.log
         make && sync
-        reboot
+        /sbin/reboot
     else
         echo "[`date`] no update" >> /root/update.log
     fi
