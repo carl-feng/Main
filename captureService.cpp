@@ -24,13 +24,13 @@ extern "C"{
 #include <pthread.h>
 #include <jpeglib.h>
 #include <sys/shm.h>
+#include <sys/sem.h>
+#include <stdlib.h>
+#include <unistd.h>
+#define SHM_SIZE (1024*1024)
+#define SHM_MODE 0600
+#define SEM_MODE 0600
 
-pthread_mutex_t mutex;
-pthread_cond_t condition;
-pthread_mutex_t mutex2;
-pthread_cond_t condition2;
-int flag = 3;
-char* filename;
 char* shared;
 
 #define TFAIL -1
@@ -47,7 +47,7 @@ int g_hflip = 0;
 int g_vdi_enable = 0;
 int g_vdi_motion = 0;
 int g_tb = 0;
-int g_capture_num_buffers = 3;
+int g_capture_num_buffers = 2;
 int g_in_width = 0;
 int g_in_height = 0;
 int g_display_width = 720;
@@ -67,6 +67,75 @@ struct testbuffer
 };
 
 struct testbuffer capture_buffers[3];
+
+union semun{
+    int val;
+    struct semid_ds *buf;
+    unsigned short *array;
+};
+
+const int N_BUFFER = 1;//缓冲区容量
+int semSetId=-1;
+union semun su;//sem union，用于初始化信号量
+
+//semSetId 表示信号量集合的 id
+//semNum 表示要处理的信号量在信号量集合中的索引
+void waitSem(int semSetId,int semNum)
+{
+    struct sembuf sb;
+    sb.sem_num = semNum;
+    sb.sem_op = -1;//表示要把信号量减一
+    sb.sem_flg = SEM_UNDO;//
+    //第二个参数是 sembuf [] 类型的，表示数组
+    //第三个参数表示 第二个参数代表的数组的大小
+    if(semop(semSetId,&sb,1) < 0){
+        perror("waitSem failed");
+        exit(1);
+    }
+}
+void sigSem(int semSetId,int semNum)
+{
+    struct sembuf sb;
+    sb.sem_num = semNum;
+    sb.sem_op = 1;
+    sb.sem_flg = SEM_UNDO;
+    //第二个参数是 sembuf [] 类型的，表示数组
+    //第三个参数表示 第二个参数代表的数组的大小
+    if(semop(semSetId,&sb,1) < 0){
+        perror("waitSem failed");
+        exit(1);
+    }
+}
+
+void init()
+{
+    //信号量创建
+    //第一个:同步信号量,表示先后顺序,必须有空间才能生产
+    //第二个:同步信号量,表示先后顺序,必须有产品才能消费
+    //第三个:互斥信号量,生产者和每个消费者不能同时进入缓冲区
+
+    if((semSetId = semget((key_t)54321,3,IPC_CREAT|SEM_MODE)) < 0)
+    {
+        perror("create semaphore failed");
+        exit(1);
+    }
+    //信号量初始化,其中 su 表示 union semun 
+    su.val = N_BUFFER;//当前库房还可以接收多少产品
+    if(semctl(semSetId,0,SETVAL, su) < 0){
+        perror("semctl failed");
+        exit(1);
+    }
+    su.val = 0;//当前没有产品
+    if(semctl(semSetId,1,SETVAL,su) < 0){
+        perror("semctl failed");
+        exit(1);
+    }
+    su.val = 1;//为1时可以进入缓冲区
+    if(semctl(semSetId,2,SETVAL,su) < 0){
+        perror("semctl failed");
+        exit(1);
+    }
+}
 
 int start_capturing(void)
 {
@@ -406,10 +475,10 @@ begin:
 			return 0;
 		}
 next:
-		pthread_mutex_lock(&mutex);
-		while(flag == 3) pthread_cond_wait(&condition2, &mutex);
+		waitSem(semSetId,0);//获取一个空间用于存放产品
+        waitSem(semSetId,2);//占有产品缓冲区
 		
-		memset(&capture_buf, 0, sizeof(capture_buf));
+        memset(&capture_buf, 0, sizeof(capture_buf));
 		capture_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		capture_buf.memory = V4L2_MEMORY_MMAP;
 		if (ioctl(fd_capture_v4l, VIDIOC_DQBUF, &capture_buf) < 0) {
@@ -417,21 +486,11 @@ next:
 			return TFAIL;
 		}
 
-		if(flag==0){
-			FILE* file = fopen(filename, "wb");
-			compress_yuyv_to_jpeg(capture_buffers[capture_buf.index].start, g_in_width, g_in_height, file, 90);
-			fclose(file);
-			printf("capture jpeg file %s\n", filename);
-		}
-		else
-		{
-		//	printf("copy yuyv\n");
-			memcpy(shared, capture_buffers[capture_buf.index].start, g_in_width*g_in_height*2);
-		//	printf("after copy yuyv\n");
-		}
-		flag = 3;
-		pthread_cond_signal(&condition);
-		pthread_mutex_unlock(&mutex);
+        //printf("copy yuyv\n");
+		memcpy(shared,capture_buffers[capture_buf.index].start,g_in_width*g_in_height*2);
+		//printf("after copy yuyv\n");
+        sigSem(semSetId,2);//释放产品缓冲区
+        sigSem(semSetId,1);//告知消费者有产品了
 		
 		if (ioctl(fd_capture_v4l, VIDIOC_QBUF, &capture_buf) < 0) {
 			printf("VIDIOC_QBUF failed\n");
@@ -461,6 +520,8 @@ void* capture_thread(void* arg)
 	}
 	printf("Memory attached at %X\n", (int)shm);
 	shared = (char*)shm;
+    
+    init();
 	
 	enum v4l2_buf_type type;
 
@@ -525,77 +586,13 @@ int main(int argc, char * argv[])
         exit(0);
     }
 
-    pthread_mutex_init(&mutex, NULL);
-    pthread_cond_init (&condition, NULL);
-    pthread_mutex_init(&mutex2, NULL);
-    pthread_cond_init (&condition2, NULL);
-
     int ret=pthread_create(&id, NULL, capture_thread, NULL);  
     if(ret!=0)  
     {
         printf("Create pthread error!\n");  
         return -1;  
     }
-    //创建context，zmq的socket 需要在context上进行创建 
-    if((pCtx = zmq_ctx_new()) == NULL)
-    {
-        return 0;
-    }
-    //创建zmq socket ，socket目前有6中属性 ，这里使用dealer方式
-    //具体使用方式请参考zmq官方文档（zmq手册） 
-    if((pSock = zmq_socket(pCtx, ZMQ_DEALER)) == NULL)
-    {
-        zmq_ctx_destroy(pCtx);
-        return 0;
-    }
-    int iRcvTimeout = 5000;// millsecond
-    //设置zmq的接收超时时间为5秒 
-    if(zmq_setsockopt(pSock, ZMQ_RCVTIMEO, &iRcvTimeout, sizeof(iRcvTimeout)) < 0)
-    {
-        zmq_close(pSock);
-        zmq_ctx_destroy(pCtx);
-        return 0;
-    }
-    //绑定地址 tcp://*:7766 
-    if(zmq_bind(pSock, pAddr) < 0)
-    {
-        zmq_close(pSock);
-        zmq_ctx_destroy(pCtx);
-        return 0;
-    }
-    
-    printf("bind at : %s\n", pAddr);
-    while(1)
-    {
-        static char szMsg[1024];
-        memset(szMsg, 0, 1024);
-        if(zmq_recv(pSock, szMsg, sizeof(szMsg), 0) <= 0)
-        {
-            continue;
-        }
-	    //printf("received msg = %s\n", szMsg);
-	    pthread_mutex_lock(&mutex);
-	    if(strcmp(szMsg, "YUYV") == 0)
-    	{
-            flag = 1;
-        }
-	    else
-	    {
-		    filename = szMsg;
-		    flag = 0;
-        }
-        //printf("flag = %d\n", flag);
-        pthread_cond_signal(&condition2);
-        while(flag != 3)
-    	    pthread_cond_wait(&condition, &mutex);
-        pthread_mutex_unlock(&mutex);
-        zmq_send(pSock, "OK", 2, 0);
-    }
-    pthread_mutex_destroy(&mutex);
-    pthread_cond_destroy(&condition);
-    pthread_mutex_destroy(&mutex2);
-    pthread_cond_destroy(&condition2);
-
+    while(1) sleep(10);
     return 0;
 }
 

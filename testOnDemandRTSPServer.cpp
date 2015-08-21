@@ -33,6 +33,12 @@ extern "C" {
 #include <zmq.h>
 #include "liveMedia.hh"
 #include "BasicUsageEnvironment.hh"
+#include <sys/sem.h>
+#include <stdlib.h>
+#include <unistd.h>
+#define SHM_SIZE (1024*1024)
+#define SHM_MODE 0600
+#define SEM_MODE 0600
 
 #define TRUE    1
 #define FALSE   0
@@ -62,6 +68,59 @@ int i_nal;
 
 #define FUNCTION_PRINT fprintf(stdout, "[%d] function %s .... calling\n", __LINE__, __func__);  
 
+union semun{
+    int val;
+    struct semid_ds *buf;
+    unsigned short *array;
+};
+
+//const int N_CONSUMER = 3;//消费者数量
+//const int N_BUFFER = 5;//缓冲区容量
+int semSetId=-1;
+union semun su;//sem union，用于初始化信号量
+
+//semSetId 表示信号量集合的 id
+//semNum 表示要处理的信号量在信号量集合中的索引
+void waitSem(int semSetId,int semNum)
+{
+    struct sembuf sb;
+    sb.sem_num = semNum;
+    sb.sem_op = -1;//表示要把信号量减一
+    sb.sem_flg = SEM_UNDO;//
+    //第二个参数是 sembuf [] 类型的，表示数组
+    //第三个参数表示 第二个参数代表的数组的大小
+    if(semop(semSetId,&sb,1) < 0){
+        perror("waitSem failed");
+        exit(1);
+    }
+}
+void sigSem(int semSetId,int semNum)
+{
+    struct sembuf sb;
+    sb.sem_num = semNum;
+    sb.sem_op = 1;
+    sb.sem_flg = SEM_UNDO;
+    //第二个参数是 sembuf [] 类型的，表示数组
+    //第三个参数表示 第二个参数代表的数组的大小
+    if(semop(semSetId,&sb,1) < 0){
+        perror("waitSem failed");
+        exit(1);
+    }
+}
+
+void init()
+{
+    //信号量创建
+    //第一个:同步信号量,表示先后顺序,必须有空间才能生产
+    //第二个:同步信号量,表示先后顺序,必须有产品才能消费
+    //第三个:互斥信号量,生产者和每个消费者不能同时进入缓冲区
+
+    if(semSetId = -1 && (semSetId = semget((key_t)54321,3,SEM_MODE)) < 0)
+    {
+        perror("create semaphore failed");
+        exit(1);
+    }
+}
 
 void convert_yuv422_to_yuv420(char *InBuff, char *OutBuff, int width,
 int height)
@@ -123,8 +182,6 @@ class CameraFrameSource : public FramedSource
 {
     int m_started;
     void *checkTask;
-    void * pCtx;
-    void * pSock;
     void *shm;//分配的共享内存的原始首地址
     void *shared;//指向shm
     int shmid;//共享内存标识符
@@ -137,40 +194,6 @@ public:
         m_started = 0;
         checkTask = NULL;
         
-
-    pCtx = NULL;
-    pSock = NULL;
-    //使用tcp协议进行通信，需要连接的目标机器IP地址为192.168.1.2
-    //通信使用的网络端口 为7766 
-    const char * pAddr = "tcp://localhost:7766";
-
-    //创建context 
-    if((pCtx = zmq_ctx_new()) == NULL)
-    {
-        exit(-1);
-    }
-    //创建socket 
-    if((pSock = zmq_socket(pCtx, ZMQ_DEALER)) == NULL)
-    {
-        zmq_ctx_destroy(pCtx);
-        exit(-1);
-    }
-    int iSndTimeout = 5000;// millsecond
-    //设置接收超时 
-    if(zmq_setsockopt(pSock, ZMQ_RCVTIMEO, &iSndTimeout, sizeof(iSndTimeout)) < 0)
-    {
-        zmq_close(pSock);
-        zmq_ctx_destroy(pCtx);
-        exit(-1);
-    }
-    //连接目标 localhost，端口7766 
-    if(zmq_connect(pSock, pAddr) < 0)
-    {
-        zmq_close(pSock);
-        zmq_ctx_destroy(pCtx);
-        exit(-1);
-    }
-
     {
 	//创建共享内存
 	shmid = shmget((key_t)123456, 720*576*3, 0666|IPC_CREAT);
@@ -190,7 +213,9 @@ public:
    
 	//设置共享内存
 	shared = (void*)shm;
-   } 
+    
+    init();
+    } 
         /* Get default params for preset/tuning */
         if(x264_param_default_preset(&param, "veryfast", "zerolatency") < 0)
         {
@@ -253,8 +278,6 @@ public:
         }
         x264_encoder_close( h );
         x264_picture_clean( &pic );
-        zmq_close(pSock);
-        zmq_ctx_destroy(pCtx);
 	if(shmdt(shm) == -1)
 	{
 		fprintf(stderr, "shmdt failed\n");
@@ -294,21 +317,13 @@ private:
         int luma_size = WIDTH * HEIGHT;
         int chroma_size = luma_size / 4;
 
-        /* Read input frame */
-	char szMsg[10] = {0};
-        if(zmq_send(pSock, "YUYV", 4, 0) >= 0)
-	{
-		if(zmq_recv(pSock, szMsg, sizeof(szMsg), 0) >= 0)
-		{
-			if(strcmp(szMsg, "OK"))
-			{
-				printf("capture one frame\n");
-			}
-		}
-	}
-    
     char yuv420[luma_size*3];
+        /* Read input frame */
+    waitSem(semSetId,1);//必须有产品才能消费
+    waitSem(semSetId,2);//锁定缓冲区
     convert_yuv422_to_yuv420((char*)shared, yuv420, WIDTH, HEIGHT); 
+    sigSem(semSetId,2);//释放缓冲区
+    sigSem(semSetId,0);//告知生产者,有空间了
     /* Read input frame */
     memcpy(pic.img.plane[0], yuv420, luma_size);
     memcpy(pic.img.plane[1], yuv420 + luma_size, chroma_size);
@@ -316,7 +331,7 @@ private:
 	
         pic.i_pts = i_frame++;
         i_frame_size = x264_encoder_encode( h, &nal, &i_nal, &pic, &pic_out );        /* Encode frames */
-        printf("i_frame_size 1 = %d\n", i_frame_size);
+        //printf("i_frame_size 1 = %d\n", i_frame_size);
          if(i_frame_size < 0)
          {
             printf("x264_encoder_encode failed\n");

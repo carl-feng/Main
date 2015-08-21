@@ -6,9 +6,6 @@ all: Main watchdog capturejpg captureService testOnDemandRTSPServer rtsp2jpg add
 Main: rs232.o powermgt.o Util.o  main.o  server.o minIni.o  mongoose.o backup.o detect.o 
 	g++ -o Main rs232.o powermgt.o Util.o main.o  server.o minIni.o  mongoose.o backup.o detect.o ${libs}
 
-ComputerVisionInterface.o : ComputerVisionInterface.h ComputerVisionInterface.cpp
-	g++ -c ComputerVisionInterface.cpp ${cflags}
-
 rs232.o : rs232.h rs232.c Util.h
 	gcc -c rs232.c
 
@@ -40,10 +37,10 @@ watchdog : Util.o minIni.o watchdog.cpp log.h backup.o
 	g++ -o watchdog Util.o backup.o minIni.o watchdog.cpp -lcurl -ljsoncpp -lboost_system ${cflags}
 
 capturejpg : capturejpg.cpp
-	g++ -o capturejpg capturejpg.cpp -lzmq ${cflags}
+	g++ -o capturejpg capturejpg.cpp -ljpeg ${cflags}
 
 captureService : captureService.cpp
-	g++ -o captureService captureService.cpp -ljpeg -lv4l2 -lzmq -pthread ${cflags}
+	g++ -o captureService captureService.cpp -ljpeg -lv4l2 -pthread ${cflags}
 
 rtsp2jpg : rtsp2jpg.cpp
 	g++ -o rtsp2jpg rtsp2jpg.cpp -D__STDC_CONSTANT_MACROS -ljpeg -lavformat -lavfilter  -lavcodec -lswscale
