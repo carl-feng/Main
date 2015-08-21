@@ -67,6 +67,42 @@ bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model)
             //Scalar color(0, 255, 0);
             //drawContours(fgimg, contours, largestComp, color, CV_FILLED, 8, hierarchy);
             Danger_Flag=true;
+			 Rect r = boundingRect(Mat(contours[idx]));
+			 Scalar scalar(0,0,255);
+			 rectangle(img, r, scalar, 2); 
+			 vector<Point> ::iterator iter1 =contours[idx].begin();
+			  long Xmax =(*iter1).x;
+			  long Xmin =(*iter1).x;
+			  long Ymax =(*iter1).y;
+			  long Ymin =(*iter1).y;
+			  while(iter1 != contours[idx].end())
+			  {	  
+				 if ((*iter1).x>=Xmax)
+				 {
+                    Xmax=(*iter1).x;
+				 }
+				 if ((*iter1).x<Xmin)
+				 {
+					Xmin =(*iter1).x;
+				 }
+				 if ((*iter1).y>=Ymax)
+				 {
+					 Ymax=(*iter1).y;
+				 }
+				 if ((*iter1).y<Ymin)
+				 {
+					 Ymin=(*iter1).y;
+				 }
+				 ++iter1;
+			  }
+			   Mat edge;
+			   Mat img2(img.rows,img.cols,CV_8UC3);
+			   img(Rect(Xmin,Ymin,Xmax-Xmin,Ymax-Ymin)).copyTo(img2);	  
+				   cvtColor(img2,img2,CV_BGR2GRAY);
+				   Canny(img2,edge,125,350);
+				   vector<Vec4i> lines;
+
+				   HoughLinesP(edge, lines, 1, CV_PI/180, 80, 40, 5);
          }
     }
 
