@@ -488,17 +488,29 @@ int main( int argc, char* argv[] )
         SendSolarStatusCmd();
         double alarm_voltage = CUtil::GetBattery().battery_voltage;
         USER_PRINT("solar battery voltage = %f.\n", alarm_voltage);
-        
+
+        SendSetAlarmVoltageCmd(alarm_voltage);
+
+        int morning = CUtil::GetMorningInt();
+        int night = CUtil::GetNightInt();
+        USER_PRINT("sync night interval: morning = %d, night = %d.\n", morning, night);
+        for(int i = 1; i <= 12; i++)
+        {
+            SendSetNightIntervalCmd(i, night, 0, morning, 0);
+        }
+
         time_t now = time(NULL);
         struct tm *pTM = localtime(&now);
         static int hour = 0;
         
+        SendSetSystemTimeCmd(pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->sec);
+
         if(pTM->tm_hour != hour)
         {
             if(alarm_voltage < CUtil::ini_query_float("init", "alarm_voltage", -1))
             {
                 // report to watchdog board, and shutdown main board to charge battery.
-                
+               system("poweroff &"); 
             }
 
             // force train backgroud every one hour

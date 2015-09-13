@@ -33,18 +33,205 @@ int n = 0, i, cport_nr = 0, bdrate = 4800;
 unsigned char buf[NUM];
 char mode[] = {'8','N','1',0};
 
-#define HEADER_1            0xEB
-#define HEADER_2            0x90
-#define CAM_POWER_ON_CMD    0x55
-#define CAM_POWER_OFF_CMD   0x5A
-#define RESTART_OS_CMD      0x5C
-#define HEART_BEAT_CMD      0x5E
-#define SOLAR_STATUS_CMD    0x60
+#define HEADER_1				0xEB
+#define HEADER_2				0x90
+#define CAM_POWER_ON_CMD		0x55
+#define CAM_POWER_OFF_CMD		0x5A
+#define RESTART_OS_CMD			0x5C
+#define HEART_BEAT_CMD			0x5E
+#define SOLAR_STATUS_CMD		0x60
+#define SET_SYSTEM_TIME_CMD		0x64
+#define SET_ALARM_VOLTAGE_CMD	0x70
+#define SET_NIGHT_INTERVAL_CMD	0x92
 
 #define TIMEOUT             100 //100ms
 #define msleep(x)           usleep(x*1000)
 
+BYTE Dec2BCD(BYTE temp)
+{
+	return ((temp/10)*16 + temp%10) ;
+}
+
+BYTE BCD2Dec(BYTE temp)
+{
+	return ((temp/16)*10+temp%16);
+}
+
+
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+bool SendSetSystemTimeiCmd(int year, int month, int day, int hour, int minute, int second)
+{
+    int i, n = 0;
+    bool bCheck = false;
+    unsigned char szBuf[NUM] = {0};
+	pthread_mutex_lock(&mutex);
+	if(RS232_OpenComport(cport_nr, bdrate, mode))
+	{
+		USER_PRINT("Can not open comport\n");
+		return false;
+	}
+
+    for(i = 0; i < 5; i++)
+    {
+        n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
+        msleep(TIMEOUT);
+    }
+    USER_PRINT("clear %d chars\n", n);
+    n = 0;
+    
+    szBuf[0] = HEADER_1;
+    szBuf[1] = HEADER_2;
+    szBuf[2] = SET_SYSTEM_TIME_CMD;
+    szBuf[3] = 6;
+    szBuf[4] = Dec2BCD((uint8_t)year);
+    szBuf[5] = Dec2BCD((uint8_t)month);
+    szBuf[6] = Dec2BCD((uint8_t)day);
+    szBuf[7] = Dec2BCD((uint8_t)hour);
+    szBuf[8] = Dec2BCD((uint8_t)minute);
+    szBuf[9] = Dec2BCD((uint8_t)second);
+    szBuf[10] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5] + szBuf[6] + szBuf[7] +
+				+ szBuf[8] + szBuf[9]) & 0xFF);
+    RS232_SendBuf(cport_nr, szBuf, 11);
+
+    for(int i = 0; i < 11; i++)
+        printf("%x ", szBuf[i]);
+    printf("\n");
+    
+    for(i = 0; i < 5; i++)
+    {
+        msleep(TIMEOUT);
+		n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
+    }
+	RS232_CloseComport(cport_nr);
+	pthread_mutex_unlock(&mutex);
+    
+    for(int i = 0; i < n; i++)
+        printf("%x ", szBuf[i]);
+    printf("\n");
+    USER_PRINT("Receive bytes n = %d\n", n);
+    
+    if(n != 5)
+        bCheck = false;
+    else
+        bCheck = (szBuf[4] == (szBuf[2] & 0xFF));
+    USER_PRINT("SendSetSystemTimeCmd bCheck = %d\n", bCheck);
+    return bCheck;
+}
+
+bool SendSetAlarmVoltageCmd(double voltage)
+{
+    int i, n = 0;
+    bool bCheck = false;
+    unsigned char szBuf[NUM] = {0};
+	pthread_mutex_lock(&mutex);
+	if(RS232_OpenComport(cport_nr, bdrate, mode))
+	{
+		USER_PRINT("Can not open comport\n");
+		return false;
+	}
+
+    for(i = 0; i < 5; i++)
+    {
+        n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
+        msleep(TIMEOUT);
+    }
+    USER_PRINT("clear %d chars\n", n);
+    n = 0;
+    
+	int vol = (int)voltage*100;
+	
+    szBuf[0] = HEADER_1;
+    szBuf[1] = HEADER_2;
+    szBuf[2] = SET_ALARM_VOLTAGE_CMD;
+    szBuf[3] = 2;
+    szBuf[4] = LOBYTE(vol);
+    szBuf[5] = HIBYTE(vol);
+    szBuf[6] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5]) & 0xFF);
+    RS232_SendBuf(cport_nr, szBuf, 7);
+
+    for(int i = 0; i < 7; i++)
+        printf("%x ", szBuf[i]);
+    printf("\n");
+    
+    for(i = 0; i < 5; i++)
+    {
+        msleep(TIMEOUT);
+		n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
+    }
+	RS232_CloseComport(cport_nr);
+	pthread_mutex_unlock(&mutex);
+    
+    for(int i = 0; i < n; i++)
+        printf("%x ", szBuf[i]);
+    printf("\n");
+    USER_PRINT("Receive bytes n = %d\n", n);
+    
+    if(n != 5)
+        bCheck = false;
+    else
+        bCheck = (szBuf[4] == (szBuf[2] & 0xFF));
+    USER_PRINT("SendSetAlarmVoltageCmd bCheck = %d\n", bCheck);
+}
+
+bool SendSetNightIntervalCmd(int month, int start_hour, int start_minute, int end_hour, int end_minute)
+{
+    int i, n = 0;
+    bool bCheck = false;
+    unsigned char szBuf[NUM] = {0};
+	pthread_mutex_lock(&mutex);
+	if(RS232_OpenComport(cport_nr, bdrate, mode))
+	{
+		USER_PRINT("Can not open comport\n");
+		return false;
+	}
+
+    for(i = 0; i < 5; i++)
+    {
+        n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
+        msleep(TIMEOUT);
+    }
+    USER_PRINT("clear %d chars\n", n);
+    n = 0;
+    
+	int vol = (int)voltage*100;
+	
+    szBuf[0] = HEADER_1;
+    szBuf[1] = HEADER_2;
+    szBuf[2] = SET_NIGHT_INTERVAL_CMD;
+	szBuf[3] = 5;
+    szBuf[4] = Dec2BCD((uint8_t)month);
+    szBuf[5] = Dec2BCD((uint8_t)start_minute);
+    szBuf[6] = Dec2BCD((uint8_t)start_hour);
+    szBuf[7] = Dec2BCD((uint8_t)end_minute);
+    szBuf[8] = Dec2BCD((uint8_t)end_hour);
+    szBuf[9] = ((szBuf[2] + szBuf[3] + szBuf[4] + szBuf[5] + szBuf[6] + szBuf[7] +
+				szBuf[8]) & 0xFF);
+    RS232_SendBuf(cport_nr, szBuf, 10);
+
+    for(int i = 0; i < 10; i++)
+        printf("%x ", szBuf[i]);
+    printf("\n");
+    
+    for(i = 0; i < 5; i++)
+    {
+        msleep(TIMEOUT);
+		n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
+    }
+	RS232_CloseComport(cport_nr);
+	pthread_mutex_unlock(&mutex);
+    
+    for(int i = 0; i < n; i++)
+        printf("%x ", szBuf[i]);
+    printf("\n");
+    USER_PRINT("Receive bytes n = %d\n", n);
+    
+    if(n != 5)
+        bCheck = false;
+    else
+        bCheck = (szBuf[4] == (szBuf[2] & 0xFF));
+    USER_PRINT("SendSetNightIntervalCmd bCheck = %d\n", bCheck);
+}
 
 bool SendHeartBeatCmd(uint16_t seconds)
 {
