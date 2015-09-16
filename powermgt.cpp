@@ -38,11 +38,11 @@ char mode[] = {'8','N','1',0};
 #define CAM_POWER_ON_CMD		0x55
 #define CAM_POWER_OFF_CMD		0x5A
 #define RESTART_OS_CMD			0x5C
-#define HEART_BEAT_CMD			0x5E
+#define HEART_BEAT_CMD			0x72
 #define SOLAR_STATUS_CMD		0x60
 #define SET_SYSTEM_TIME_CMD		0x64
 #define SET_ALARM_VOLTAGE_CMD	0x70
-#define SET_NIGHT_INTERVAL_CMD	0x92
+#define SET_NIGHT_INTERVAL_CMD	0x42
 
 #define TIMEOUT             100 //100ms
 #define msleep(x)           usleep(x*1000)
@@ -84,7 +84,7 @@ bool SendSetSystemTimeiCmd(int year, int month, int day, int hour, int minute, i
     szBuf[1] = HEADER_2;
     szBuf[2] = SET_SYSTEM_TIME_CMD;
     szBuf[3] = 6;
-    szBuf[4] = Dec2BCD((uint8_t)year);
+    szBuf[4] = Dec2BCD((uint8_t)(year%100));
     szBuf[5] = Dec2BCD((uint8_t)month);
     szBuf[6] = Dec2BCD((uint8_t)day);
     szBuf[7] = Dec2BCD((uint8_t)hour);
@@ -139,7 +139,7 @@ bool SendSetAlarmVoltageCmd(double voltage)
     USER_PRINT("clear %d chars\n", n);
     n = 0;
     
-	int vol = (int)voltage*100;
+	int vol = (int)(voltage*100);
 	
     szBuf[0] = HEADER_1;
     szBuf[1] = HEADER_2;

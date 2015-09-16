@@ -465,6 +465,10 @@ int main( int argc, char* argv[] )
     boost::thread heartthrd(&HeartBeatThread);
 
     CUtil::ChangeAPSSIDIfNeeded(); 
+        
+    time_t _now = time(NULL);
+    struct tm *pTM = localtime(&_now);
+    SendSetSystemTimeCmd(pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->sec);
     
     // wait for 3G connection ready
     while(!Check3G())
@@ -486,8 +490,14 @@ int main( int argc, char* argv[] )
         system("echo [`date`] >> /root/check_3G.log");
         
         SendSolarStatusCmd();
-        double alarm_voltage = CUtil::GetBattery().battery_voltage;
+        double battery_voltage = CUtil::GetBattery().battery_voltage;
         USER_PRINT("solar battery voltage = %f.\n", alarm_voltage);
+        double alarm_voltage = CUtil::ini_query_float("init", "alarm_voltage", -1);
+        if(battery_voltage < alarm_voltage)
+        {
+            // report to watchdog board, and shutdown main board to charge battery.
+            system("poweroff &"); 
+        }
 
         SendSetAlarmVoltageCmd(alarm_voltage);
 
@@ -502,17 +512,9 @@ int main( int argc, char* argv[] )
         time_t now = time(NULL);
         struct tm *pTM = localtime(&now);
         static int hour = 0;
-        
-        SendSetSystemTimeCmd(pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->sec);
 
         if(pTM->tm_hour != hour)
         {
-            if(alarm_voltage < CUtil::ini_query_float("init", "alarm_voltage", -1))
-            {
-                // report to watchdog board, and shutdown main board to charge battery.
-               system("poweroff &"); 
-            }
-
             // force train backgroud every one hour
             g_bInitModel = false;
         }
