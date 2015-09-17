@@ -238,7 +238,11 @@ again:
             if(pTM->tm_hour > morning && pTM->tm_hour < night)
                 sleepSec = CUtil::GetCheckInterval();
             else
-                sleepSec = CUtil::GetCheckInterval_Night();
+            {
+                //sleepSec = CUtil::GetCheckInterval_Night();
+                system("poweroff &");
+                exit(0);
+            }
             if(sleepSec > 0)
             {
                 USER_PRINT("Sleep %d seconds in WorkThread.\n", sleepSec);
@@ -497,6 +501,7 @@ int main( int argc, char* argv[] )
         {
             // report to watchdog board, and shutdown main board to charge battery.
             system("poweroff &"); 
+            exit(0);
         }
 
         SendSetAlarmVoltageCmd(alarm_voltage);
