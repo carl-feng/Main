@@ -495,8 +495,9 @@ int main( int argc, char* argv[] )
         
         SendSolarStatusCmd();
         double battery_voltage = CUtil::GetBattery().battery_voltage;
-        USER_PRINT("solar battery voltage = %f.\n", battery_voltage);
         double alarm_voltage = CUtil::ini_query_float("init", "alarm_voltage", -1);
+        USER_PRINT("solar battery voltage = %f, alarm voltage = %f.\n", battery_voltage,
+            alarm_voltage);
         if(battery_voltage < alarm_voltage)
         {
             // report to watchdog board, and shutdown main board to charge battery.
