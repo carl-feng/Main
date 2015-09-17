@@ -468,7 +468,7 @@ int main( int argc, char* argv[] )
         
     time_t _now = time(NULL);
     struct tm *pTM = localtime(&_now);
-    SendSetSystemTimeCmd(pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->sec);
+    SendSetSystemTimeCmd(pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
     
     // wait for 3G connection ready
     while(!Check3G())
@@ -491,7 +491,7 @@ int main( int argc, char* argv[] )
         
         SendSolarStatusCmd();
         double battery_voltage = CUtil::GetBattery().battery_voltage;
-        USER_PRINT("solar battery voltage = %f.\n", alarm_voltage);
+        USER_PRINT("solar battery voltage = %f.\n", battery_voltage);
         double alarm_voltage = CUtil::ini_query_float("init", "alarm_voltage", -1);
         if(battery_voltage < alarm_voltage)
         {

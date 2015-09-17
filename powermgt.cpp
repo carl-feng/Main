@@ -60,7 +60,7 @@ BYTE BCD2Dec(BYTE temp)
 
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-bool SendSetSystemTimeiCmd(int year, int month, int day, int hour, int minute, int second)
+bool SendSetSystemTimeCmd(int year, int month, int day, int hour, int minute, int second)
 {
     int i, n = 0;
     bool bCheck = false;
@@ -194,8 +194,6 @@ bool SendSetNightIntervalCmd(int month, int start_hour, int start_minute, int en
     USER_PRINT("clear %d chars\n", n);
     n = 0;
     
-	int vol = (int)voltage*100;
-	
     szBuf[0] = HEADER_1;
     szBuf[1] = HEADER_2;
     szBuf[2] = SET_NIGHT_INTERVAL_CMD;
