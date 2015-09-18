@@ -235,9 +235,8 @@ again:
             int morning = CUtil::GetMorningInt();
             int night = CUtil::GetNightInt();
             USER_PRINT("morning = %d, night = %d.\n", morning, night);
-            if(pTM->tm_hour > morning && pTM->tm_hour < night)
-                sleepSec = CUtil::GetCheckInterval();
-            else
+            sleepSec = CUtil::GetCheckInterval();
+            if(pTM->tm_hour >= night)
             {
                 //sleepSec = CUtil::GetCheckInterval_Night();
                 system("poweroff &");
