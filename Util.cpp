@@ -2,6 +2,9 @@
 #include "minIni.h"
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netinet/if_ether.h>
 #include <jsoncpp/json/json.h>
 #include <curl/curl.h>
@@ -257,6 +260,28 @@ bool CUtil::GenerateDeviceID(string& deviceID)
 
     close(sock_mac);
     return true;
+}
+
+string CUtil::GetIP()
+{
+    int fd;
+    struct ifreq ifr;
+
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    /* I want to get an IPv4 IP address */
+    ifr.ifr_addr.sa_family = AF_INET;
+
+    /* I want IP address attached to "ppp0" */
+    strncpy(ifr.ifr_name, "ppp0", IFNAMSIZ-1);
+
+    int err = ioctl(fd, SIOCGIFADDR, &ifr);
+
+    close(fd);
+
+    if(err) return "";
+
+    return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 }
 
 void CUtil::ChangeAPSSIDIfNeeded()

@@ -274,6 +274,15 @@ static int process_req(struct mg_connection *conn) {
     }
     else if (strcmp(conn->uri, "/query") == 0) {
         Json::Value message;
+        message["info"]["tower_name"] = CUtil::GetLocation();
+        message["info"]["device_id"] = CUtil::GetBoardID();
+        
+        string rtsp = "rtsp://";
+        string ip = CUtil::GetIP();
+        message["info"]["ip"] = ip;
+        
+        message["info"]["rtsp0"] = rtsp + ip + ":8554/h264ESVideoTest";
+        message["info"]["rtsp1"] = rtsp + ip + ":554/proxyStream";
         status s = CUtil::GetStatus();
         message["wifi"] = s.wifi;
         message["3G"] = s._3G;

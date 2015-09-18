@@ -96,6 +96,7 @@ public:
     static void SetGPS(GPS g);
 
     static bool GenerateDeviceID(string& deviceID);
+    static string GetIP();
     static void ChangeAPSSIDIfNeeded();
     static void OpenAP();
     static void CloseAP();
