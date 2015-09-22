@@ -437,22 +437,22 @@ string CUtil::CheckVersion()
 
 int CUtil::GetMorningInt()
 {
-    return ini_query_int("init", "MorningInt", 6);
+    return ini_query_int("configure", "morning", 6);
 }
 
 int CUtil::GetNightInt()
 {
-    return ini_query_int("init", "NightInt", 18);
+    return ini_query_int("configure", "night", 18);
 }
 
 bool CUtil::SetMorningInt(int morning)
 {
-    return ini_save_int("init", "MorningInt", morning);
+    return ini_save_int("configure", "morning", morning);
 }
 
 bool CUtil::SetNightInt(int night)
 {
-    return ini_save_int("init", "NightInt", night);
+    return ini_save_int("configure", "night", night);
 }
 
 void CUtil::SyncDateTime()

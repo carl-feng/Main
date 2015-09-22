@@ -77,7 +77,6 @@ bool SendSetSystemTimeCmd(int year, int month, int day, int hour, int minute, in
         n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
         msleep(TIMEOUT);
     }
-    USER_PRINT("clear %d chars\n", n);
     n = 0;
     
     szBuf[0] = HEADER_1;
@@ -136,7 +135,6 @@ bool SendSetAlarmVoltageCmd(double voltage)
         n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
         msleep(TIMEOUT);
     }
-    USER_PRINT("clear %d chars\n", n);
     n = 0;
     
 	int vol = (int)(voltage*100);
@@ -191,7 +189,6 @@ bool SendSetNightIntervalCmd(int month, int start_hour, int start_minute, int en
         n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
         msleep(TIMEOUT);
     }
-    USER_PRINT("clear %d chars\n", n);
     n = 0;
     
     szBuf[0] = HEADER_1;
@@ -248,7 +245,6 @@ bool SendHeartBeatCmd(uint16_t seconds)
         n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
         msleep(TIMEOUT);
     }
-    USER_PRINT("clear %d chars\n", n);
     n = 0;
     
     szBuf[0] = HEADER_1;
@@ -302,7 +298,6 @@ bool SendRestartOSCmd(uint16_t delay)
         n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
         msleep(TIMEOUT);
     }
-    USER_PRINT("clear %d chars\n", n);
     n = 0;
 
     delay = delay/10;
@@ -359,7 +354,6 @@ bool SendCameraPowerCmd(uint8_t cam_index, uint16_t delay, bool enable)
         n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
         msleep(TIMEOUT);
     }
-    USER_PRINT("clear %d chars\n", n);
     n = 0;
     
     delay /= 10;
@@ -418,7 +412,6 @@ bool SendSolarStatusCmd()
         n += RS232_PollComport(cport_nr, szBuf + n, NUM - n);
         msleep(TIMEOUT);
     }
-    USER_PRINT("clear %d chars\n", n);
     n = 0;
     
     szBuf[0] = HEADER_1;

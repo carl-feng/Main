@@ -283,15 +283,16 @@ static int process_req(struct mg_connection *conn) {
         
         message["info"]["rtsp0"] = rtsp + ip + ":8554/h264ESVideoTest";
         message["info"]["rtsp1"] = rtsp + ip + ":554/proxyStream";
+        
         status s = CUtil::GetStatus();
-        message["wifi"] = s.wifi;
-        message["3G"] = s._3G;
-        message["camera0"] = s.camera0;
-        message["camera1"] = s.camera1;
-        message["camera0_power"] = s.camera0_power;
-        message["camera1_power"] = s.camera1_power;
-        message["sms"] = s.sendsms;
-        message["alarm"] = s.alarm;
+        message["status"]["wifi"] = s.wifi;
+        message["status"]["3G"] = s._3G;
+        message["status"]["camera0"] = s.camera0;
+        message["status"]["camera1"] = s.camera1;
+        message["status"]["camera0_power"] = s.camera0_power;
+        message["status"]["camera1_power"] = s.camera1_power;
+        message["status"]["sms"] = s.sendsms;
+        message["status"]["alarm"] = s.alarm;
 
         battery b = CUtil::GetBattery();
         
@@ -300,6 +301,7 @@ static int process_req(struct mg_connection *conn) {
         message["battery"]["charging_current"] = b.charging_current;
         message["battery"]["discharing_current"] = b.discharging_current;
         message["battery"]["llumination_intensity"] = b.illumination_intensity;
+        message["battery"]["alarm_voltage"] = CUtil::ini_query_float("init", "alarm_voltage", -1);
 
         GPS g = CUtil::GetGPS();
         message["GPS"]["latitude"] = g.latitude;
