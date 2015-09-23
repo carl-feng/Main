@@ -236,8 +236,10 @@ again:
             int night = CUtil::GetNightInt();
             USER_PRINT("morning = %d, night = %d.\n", morning, night);
             sleepSec = CUtil::GetCheckInterval();
-            if(pTM->tm_hour >= night)
+            if((night > morning && pTM->tm_hour >= night && pTM->tm_hour < 24 + morning) ||
+                night < morning && pTM->tm_hour >= night && pTM->tm_hour < morning)
             {
+                system("echo [`date`] shutdown due to night >> /root/restart.log");
                 //sleepSec = CUtil::GetCheckInterval_Night();
                 system("poweroff &");
                 exit(0);
