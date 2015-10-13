@@ -3,9 +3,6 @@
 #include "log.h"
 
 using namespace std;
-#define NGROK_NAME "ngrok"
-#define NGROK_PATH "/root/Main/ngrok"
-#define NGROK_ARG "-log=stdout start ssh rtsp0 rtsp1 > /dev/null 2>&1"
 
 #define PPPD_NAME "pppd"
 #define PPPD_PATH "pppd"
@@ -29,38 +26,8 @@ using namespace std;
 
 extern bool delete_expired_pic();
 
-void CreateNgrokConfigFile()
-{
-    char szCmd[1024] = {0};
-    string data;
-    data = "server_addr: ";
-    data += CUtil::ini_query_string("configure", "communicator_server",
-        "czyhdli.com");
-    data += ":4443\n";
-    data += "trust_host_root_cert: false\n";
-    
-    data += "tunnels:\n\n";
-    data += "  ssh:\n";
-    data += "    proto:\n";
-    data += "      tcp: 22\n\n";
-    
-    data += "  rtsp0:\n";
-    data += "    proto:\n";
-    data += "      tcp: 8554\n\n";
-    
-    data += "  rtsp1:\n";
-    data += "    proto:\n";
-    data += "      tcp: 554\n\n";
-
-    snprintf(szCmd, sizeof(szCmd), "echo \'%s\' > /root/.ngrok", data.c_str());
-    CUtil::Exec(szCmd, "", true);
-}
-
 int main()
 {
-    // 1. create .ngrok
-    CreateNgrokConfigFile();
-
     static int sleepTime = 5;
     while(true)
     {
@@ -102,45 +69,6 @@ int main()
             CUtil::Exec(RTSP1_SRV_PATH, RTSP1_SRV_ARG, false);
         }
 
-        // 7. test proxy url
-        int ret = system("ifconfig | grep ppp0 > /dev/null 2>&1");
-        if(ret == 0)
-        {
-            USER_PRINT("going to check the proxy server.\n");
-            bool bConnected = false;
-            int nRetry = 3;
-            while(nRetry--) 
-            {
-                if(CUtil::CheckProxyServer())
-                {
-                    bConnected = true;
-                    break;
-                }
-            }
-            if(!bConnected)
-            {
-                USER_PRINT("proxy server disconnected, stop %s\n", NGROK_NAME);
-                CUtil::Exec("killall ngrok", "", true);
-                sleep(1);
-            }
-        }
-        else
-        {
-            USER_PRINT("3G disconnected, sleep a short time to check again\n");
-            sleepTime = 5;
-        } 
-
-        // 8. check the ngrok
-        pid = CUtil::FindPidByName(NGROK_NAME);
-        if(pid < 0) {
-            USER_PRINT("start %s\n", NGROK_NAME);
-            CUtil::Exec(NGROK_PATH, NGROK_ARG, false);
-            char szBuf[100] = {0};
-            snprintf(szBuf, sizeof(szBuf), "%s -log=stdout -proto http 8080 \
-                > /dev/null 2>&1", NGROK_PATH);
-            CUtil::Exec(szBuf, "", false);
-        }
-
         // 9. check the config file "config.ini"
         CUtil::BackupOrRestoreIni();
 
@@ -148,7 +76,6 @@ int main()
         delete_expired_pic();
 
         // 11. sleep 60s
-        system("echo [`date`] >> /root/watchdog.log");
         USER_PRINT("sleep %ds in watchdog process\n", sleepTime);
         sleep(sleepTime);
         if(sleepTime < 600)

@@ -29,44 +29,6 @@ using namespace std;
 bool CheckAP();
 bool Post(string Url, string data);
 
-const char* RecvSMSTemplate[] =
-{
-    /* 增加接收报警信息手机 */
-    "*#增加手机号码*#",
-
-    /*删除接收报警信息手机 */
-    "*#删除手机号码*#",
-
-    /* 装置安装地点 */
-    "*#地点名称*#",
-
-    /* 如果不发送该指令，1分钟报警1次， */
-    /* 总共报警3次，再停止报警；若发送该指令，则不再报警。 */
-    "*#收到*#",
-
-    /* 该命令用于判断该系统是否工作正常。若正常系统发送短信告知用户， */
-    /* 若不正常，系统重启不发送短信。 */
-    "*#工况*#",
-
-    /* 配置模式下，系统检测模块停止工作，打开相机电源，1s读一次图像 */
-    "*#系统模式*#配置",
-
-    /* 进入演示模式，系统正常工作，同时开启WIFI，供客户端软件读取图像。 */
-    "*#系统模式*#演示",
-
-    /* 进入系统工作模式 */
-    "*#系统模式*#工作",
-
-    /* 开启WIFI模块 */
-    "*#开启无线*#",
-
-    /* 关闭WIFI模块 */
-    "*#关闭无线*#",
-
-    /* 强制报警 */
-    "*#强制报警*#"
-};
-
 enum RestartReason
 {
     WIFI_ERROR,
@@ -95,17 +57,8 @@ void RestartSystem(enum RestartReason reason)
     system(buffer);
     g_bForceExit = true;
     system("sync");
-    //system("./restart &");
     SendRestartOSCmd(10000);
     exit(-1);
-}
-
-void ClearExpiredProxyInfo()
-{
-    CUtil::ini_save_string("proxy", "rtsp0", "");
-    CUtil::ini_save_string("proxy", "rtsp1", "");
-    CUtil::ini_save_string("proxy", "http", "");
-    CUtil::ini_save_string("proxy", "ssh", "");
 }
 
 void SendProxyInfo()
@@ -124,7 +77,7 @@ void SendProxyInfo()
     root["version"] = CUtil::CheckVersion();
     string url;
     url += "http://";
-    url += CUtil::ini_query_string("configure", "communicator_server", "czyhdli.com");
+    url += CUtil::ini_query_string("configure", "communicator_server", "121.40.112.58");
     url += ":9093/updateinfo";
 again:
     time_t start = time(NULL);
@@ -149,18 +102,14 @@ again:
 
 void HeartBeatThread()
 {
-    int sec = CUtil::ini_query_int("Global", "HeartBeat", 50);
-    int i = 0;
+    int sec = CUtil::ini_query_int("Global", "HeartBeat", 60*50);
     while(!g_bForceExit)
     {
         USER_PRINT("Send heart beat ...\n");
-        SendHeartBeatCmd(2*60);
+        SendHeartBeatCmd(60*60);
         
-        bool  status = CheckAP();
-        USER_PRINT("AP status (%d)\n", status);
-        
-        SendProxyInfo();
-        int temp = i++ < 40 ? 2 : sec;
+        //SendProxyInfo();
+        int temp = sec;
         while(temp--)
         {
             sleep(1);
@@ -186,8 +135,6 @@ bool isPhoneNumberValid(string phoneNumber)
 
 bool SendSMS(string phoneNum, string text)
 {
-    //return true;
-    
     char sms[1024];
     USER_PRINT("will send sms \"%s\" to [%s]\n", text.c_str(), phoneNum.c_str());
     snprintf(sms, 1024, "echo \"%s\" | gnokii --sendsms %s > /dev/null 2>&1", 
@@ -285,16 +232,15 @@ fail:
 
 bool Check3G()
 {
-    // check the 3g
     int nRetry = 3;
     static time_t start = 0, now;
     int ret = system("ifconfig | grep ppp0 > /dev/null 2>&1");
 
     while(true)
     {
-        ret = system("ping -c 1 baidu.com -I ppp0 > /dev/null 2>&1");
+        ret = system("ping -c 1 114.114.114.114 -I ppp0 > /dev/null 2>&1");
         if(ret == 0) break;
-        if(nRetry-- == 0)
+        if(--nRetry == 0)
             goto fail;
         USER_PRINT("Retry to check the 3G connection\n");
     }
@@ -361,7 +307,7 @@ bool UploadPicture(string path)
 {
     string filename = path.substr(path.find_last_of('/')+1);
     string date = filename.substr(0, filename.find('-'));
-    string ftp_server = CUtil::ini_query_string("configure", "communicator_server", "czyhdli.com");
+    string ftp_server = CUtil::ini_query_string("configure", "communicator_server", "121.40.112.58");
     string ftp_port = CUtil::ini_query_string("configure", "ftp_port", "22");
     string ftp_user = CUtil::ini_query_string("configure", "ftp_user", "admin");
     string ftp_password = CUtil::ini_query_string("configure", "ftp_password", "yog123$");
@@ -484,7 +430,7 @@ string GetShortUrl(string& longUrl)
 bool SendAlarmInfo(string picPath, string& imgUrl)
 {
     string strResponse;
-    string http_server = CUtil::ini_query_string("configure", "communicator_server", "czyhdli.com");
+    string http_server = CUtil::ini_query_string("configure", "communicator_server", "121.40.112.58");
     string http_port = CUtil::ini_query_string("configure", "http_port", "8085");
     string filename = picPath.substr(picPath.find_last_of('/')+1);
     string date = filename.substr(0, filename.find('-') - 2);

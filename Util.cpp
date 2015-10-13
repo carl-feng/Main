@@ -67,7 +67,7 @@ configure CUtil::GetConfigure()
     c.check_interval_night = CUtil::ini_query_string("configure", "check_interval_night", "200");
     c.morning = CUtil::ini_query_string("configure", "morning", "6");
     c.night = CUtil::ini_query_string("configure", "night", "18");
-    c.communicator_server = CUtil::ini_query_string("configure", "communicator_server", "");
+    c.communicator_server = CUtil::GetServerIP();
     c.tower_name = CUtil::ini_query_string("configure", "tower_name", "");
     return c;
 }
@@ -377,7 +377,7 @@ bool CUtil::isFileExist(const char* filePath)
 
 bool CUtil::CheckInternetConnection()
 {
-    int ret = Exec("ping", "-c 1 baidu.com > /dev/null 2>&1", true);
+    int ret = Exec("ping", "-c 1 114.114.114.114 > /dev/null 2>&1", true);
     if(!ret) return false;
 
     return true;

@@ -55,8 +55,6 @@ bool CapturePic(int index, string& jpgPath)
     if(index == 0)
     {
         snprintf(cmd, 256, "./capturejpg %s > /dev/null 2>&1", jpgPath.c_str());
-        //snprintf(cmd, 256, "./rtsp2jpg rtsp://localhost:8554/h264ESVideoTest %s \
-        //    > /dev/null 2>&1", jpgPath.c_str());
     }
     else
     {
@@ -82,6 +80,13 @@ void WorkThread()
     int nRiskCount = 0;
     int nSendCount = 0;
 
+    string jpgPath;
+    int alarm_count, risk_count, threshold;
+    bool bRisk = false;
+    cv::Mat testImage;
+    int down, right, up, left;
+    bool bRet = false;
+
     while(!g_bForceExit)
     {
         g_bWorkThreadRunning = true;
@@ -90,41 +95,31 @@ void WorkThread()
         if(!Enable)
         {
             USER_PRINT("sleep until allowing to check risk ...\n");
-            sleep(1);
-            continue;
+            goto sleep;
         }
         USER_PRINT(">>>>>>>>>start to check the risk on camera0 ...\n");
-        system("echo [`date`] >> /root/work_thread.log");
 
+again:
         // 2. power on camera0
         CameraPower(0, true);
-again:
 
         // 3. take pictures
         USER_PRINT("start to capture picture ...\n");
-        string jpgPath;
-        int nRetry = 3;
-        while(true)
-        {
-            bool ret = CapturePic(0, jpgPath);
-            if(ret) break;
-            if(nRetry-- == 0)
-                RestartSystem(CAMERA0_CAPTURE_ERROR);
-            USER_PRINT("Retry to capture picture...\n");
-        }
-
+        bRet = CapturePic(0, jpgPath);
+        if(!bRet)
+            RestartSystem(CAMERA0_CAPTURE_ERROR);
         USER_PRINT("capture picture success\n");
         
         // 4. check the picture
-        bool bRet = CheckCamera0(jpgPath);
+        bRet = CheckCamera0(jpgPath);
         if(!bRet) RestartSystem(CAMERA0_CHECK_ERROR);
         USER_PRINT("camera works well\n");
         
-        int left = CUtil::ini_query_int("init", "left", 0);
-        int up = CUtil::ini_query_int("init", "up", 0);
-        int right = CUtil::ini_query_int("init", "right", 0);
-        int down = CUtil::ini_query_int("init", "down", 0);
-        Mat testImage = imread(jpgPath.c_str());
+        left = CUtil::ini_query_int("init", "left", 0);
+        up = CUtil::ini_query_int("init", "up", 0);
+        right = CUtil::ini_query_int("init", "right", 0);
+        down = CUtil::ini_query_int("init", "down", 0);
+        testImage = imread(jpgPath.c_str());
         if(!g_bInitModel)
         {
             g_Count++;
@@ -142,17 +137,15 @@ again:
         // 5. power off camera0
         CameraPower(0, false);
 
-        
         // 6. analyze the picuture
-        int threshold = (int)CUtil::CalculateCarThreshold();
-        bool bRisk = false;
+        threshold = (int)CUtil::CalculateCarThreshold();
+        bRisk = false;
         if(!g_ForceAlarm)
         {
             char buffer[100];
             USER_PRINT("going to check the image...\n");
             bRisk = TargetDetection(testImage(Rect(left, up, right - left, down - up)), threshold, false);
             USER_PRINT(">>>>>> bRisk = %d, threshold = %d\n", bRisk, threshold); 
-            sprintf(buffer, "echo \"[`date`] bRisk = %d, threshold = %d, image = %s\" >> /root/detect.log", bRisk, threshold, jpgPath.c_str());
             system(buffer);
         }
         // 7. upload picture if needed
@@ -170,21 +163,19 @@ again:
             nSendCount = 0;
         }
 
-        int risk_count = CUtil::GetRiskCount();
-        int alarm_count = CUtil::GetAlarmCount();
-        USER_PRINT("nRiskCount = %d/%d, nSendCount = %d/%d\n", nRiskCount, 
-            risk_count, nSendCount, alarm_count); 
+        risk_count = CUtil::GetRiskCount();
+        alarm_count = CUtil::GetAlarmCount();
+        USER_PRINT("nRiskCount = %d/%d, nSendCount = %d/%d\n", nRiskCount, risk_count, nSendCount, alarm_count); 
         if(nRiskCount != 0 && (nRiskCount%risk_count == 0) && (nSendCount != alarm_count))
         {
             nRiskCount = 0;
-            USER_PRINT("detected risk %d tims persistently, start to alarm\n", 
-                risk_count);
+            USER_PRINT("detected risk %d tims persistently, start to alarm\n", risk_count);
             char buffer[100] = {0};
             snprintf(buffer, 100, "./addDate2Image %s", jpgPath.c_str());
             system(buffer);
             string imgUrl;
-            bool ret = UploadPicture(jpgPath);
-            if(ret)
+            bRet = UploadPicture(jpgPath);
+            if(bRet)
             {
                 USER_PRINT("upload picture success\n");
                 g_ForceAlarm = false;
@@ -208,9 +199,9 @@ again:
                     vPhoneNumbers.size());
                 for(unsigned int i = 0; i < vPhoneNumbers.size(); i++)
                 {
-                    ret = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation()
+                    bRet = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation()
                         + " 有危险车辆驻留!!! " + imgUrl);
-                    if(ret)
+                    if(bRet)
                         {USER_PRINT("send sms success.\n");} 
                     else
                         {USER_PRINT("send sms failed.\n");}
@@ -225,8 +216,8 @@ again:
         // 8. remove the pitcure
         remove_pic_in_dir(".");
 
+sleep:
         // 9. sleep if needed
-        if(CUtil::GetAlarmStatus())
         {
             int sleepSec;
             time_t now;
@@ -240,15 +231,13 @@ again:
                 night < morning && pTM->tm_hour >= night && pTM->tm_hour < morning)
             {
                 system("echo [`date`] shutdown due to night >> /root/restart.log");
-                //sleepSec = CUtil::GetCheckInterval_Night();
                 system("poweroff &");
                 exit(0);
             }
             if(sleepSec > 0)
             {
                 USER_PRINT("Sleep %d seconds in WorkThread.\n", sleepSec);
-                while(!g_bForceExit && !g_ForceAlarm && g_bInitModel &&
-			            sleepSec-- && CUtil::GetAlarmStatus())
+                while(!g_bForceExit && !g_ForceAlarm && g_bInitModel && sleepSec--)
                     sleep(1);
             }
         }
@@ -442,8 +431,6 @@ int main( int argc, char* argv[] )
         exit(0);
     }
     
-    ClearExpiredProxyInfo();
-
     char buf[1024] = { 0 };
     int n = readlink("/proc/self/exe" , buf , sizeof(buf));
     if( n > 0 && n < sizeof(buf))
@@ -476,29 +463,21 @@ int main( int argc, char* argv[] )
     SendSetSystemTimeCmd(pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
     
     // wait for 3G connection ready
-    while(!Check3G())
-    {
-        USER_PRINT("waiting for 3G connection ready ...\n");
-        sleep(5);
-    };
     USER_PRINT("3G connection is ready\n");
    
     CUtil::SyncDateTime();
  
     boost::thread workthrd(&WorkThread);
-    boost::thread workthrd2(&WorkThread_2);
+    //boost::thread workthrd2(&WorkThread_2);
     
     while(!g_bForceExit)
     {
         if(!Check3G()) USER_PRINT("3G connection lost ...\n");
         
-        system("echo [`date`] >> /root/check_3G.log");
-        
         SendSolarStatusCmd();
         double battery_voltage = CUtil::GetBattery().battery_voltage;
         double alarm_voltage = CUtil::ini_query_float("init", "alarm_voltage", -1);
-        USER_PRINT("solar battery voltage = %f, alarm voltage = %f.\n", battery_voltage,
-            alarm_voltage);
+        USER_PRINT("solar battery voltage = %f, alarm voltage = %f.\n", battery_voltage, alarm_voltage);
         if(battery_voltage < alarm_voltage)
         {
             // report to watchdog board, and shutdown main board to charge battery.
@@ -552,7 +531,7 @@ int main( int argc, char* argv[] )
     srvthrd.join();
     heartthrd.join();
     workthrd.join();
-    workthrd2.join();
+    //workthrd2.join();
     
     USER_PRINT("=====>>>>>main thread exit.\n");
 

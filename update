@@ -7,7 +7,10 @@ if [ -e "/root/Main/version.txt" ]; then
     flag=`git pull | grep "Updating" | wc -l`
     if [ $flag = "1" ]; then
         echo "[`date`] need update" >> /root/update.log
-        make && sync
+        /usr/bin/killall watchdog Main captureService testOnDemandRTSPServer
+        /bin/bash postUpdate
+        /usr/bin/make
+        /bin/sync
         /sbin/reboot
     else
         echo "[`date`] no update" >> /root/update.log

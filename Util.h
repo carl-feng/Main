@@ -120,6 +120,11 @@ public:
         return ini_save_string("Global", "board_id", board_id);
     }
 
+    static string GetServerIP()
+    {
+        return ini_query_string("configure", "communicator_server", "121.40.112.58");
+    }
+
     static bool IsAPEnabled()
     {
         return m_bWifi; //ini_query_bool("status", "wifi", true);

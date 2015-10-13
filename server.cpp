@@ -278,9 +278,11 @@ static int process_req(struct mg_connection *conn) {
         message["info"]["device_id"] = CUtil::GetBoardID();
         
         string rtsp = "rtsp://";
+        string http = "http://";
         string ip = CUtil::GetIP();
         message["info"]["ip"] = ip;
         
+        message["info"]["http"] = http + ip + ":8080/";
         message["info"]["rtsp0"] = rtsp + ip + ":8554/h264ESVideoTest";
         message["info"]["rtsp1"] = rtsp + ip + ":554/proxyStream";
         
