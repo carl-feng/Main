@@ -227,7 +227,7 @@ sleep:
             int night = CUtil::GetNightInt();
             USER_PRINT("morning = %d, night = %d.\n", morning, night);
             sleepSec = CUtil::GetCheckInterval();
-            if((night > morning && pTM->tm_hour >= night && pTM->tm_hour < 24 + morning) ||
+            if((night > morning && (pTM->tm_hour >= night || pTM->tm_hour < morning)) ||
                 night < morning && pTM->tm_hour >= night && pTM->tm_hour < morning)
             {
                 system("echo [`date`] shutdown due to night >> /root/restart.log");
