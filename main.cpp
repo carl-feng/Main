@@ -169,6 +169,7 @@ again:
         if(nRiskCount != 0 && (nRiskCount%risk_count == 0) && (nSendCount != alarm_count))
         {
             nRiskCount = 0;
+            g_ForceAlarm = false;
             USER_PRINT("detected risk %d tims persistently, start to alarm\n", risk_count);
             char buffer[100] = {0};
             snprintf(buffer, 100, "./addDate2Image %s", jpgPath.c_str());
@@ -178,7 +179,6 @@ again:
             if(bRet)
             {
                 USER_PRINT("upload picture success\n");
-                g_ForceAlarm = false;
                 if(SendAlarmInfo(jpgPath, imgUrl))
                 {
                     USER_PRINT("sent alarm success\n");

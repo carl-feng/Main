@@ -653,8 +653,6 @@ static int ev_handler(struct mg_connection *conn, enum mg_event ev) {
     }
 }
 
-extern bool g_bForceExit;
-
 void server_thread()
 {
     struct mg_server *server = mg_create_server(NULL, ev_handler);
