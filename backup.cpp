@@ -86,7 +86,7 @@ bool backup_pic(string path)
 
 bool delete_expired_pic()
 {
-#define NUM 3
+#define NUM 2
     int months[NUM];
     time_t timep;
     const char* root = "/mnt/tf/";
