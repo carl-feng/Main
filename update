@@ -18,3 +18,8 @@ if [ -e "/root/Main/version.txt" ]; then
 else
     echo "[`date`] no version.txt, skip update" >> /root/update.log
 fi
+
+if [ ! -e "/etc/cron.hourly/syncDate" ]; then
+    cp /root/Main/syncDate /etc/cron.hourly/
+    echo "copy syncDate file success".
+fi
