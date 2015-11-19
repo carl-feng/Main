@@ -45,6 +45,9 @@ enum RestartReason
     SEND_PROXY_ERROR,
 };
 
+#define CAR_STAY 0
+#define CAR_WORK 1
+
 bool g_bForceExit = false;
 bool g_bWorkThreadRunning = false;
 pthread_mutex_t mutex;

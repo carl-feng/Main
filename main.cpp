@@ -29,7 +29,7 @@ string curPath;
 extern bool backup_pic(string path);
 bool detect_2(const char* image_filename, bool bFirst);
 extern void ReadandTrain(Mat img);
-extern bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model);
+extern bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model, int scenario_mode, int& danger_type);
 
 void CameraPower(int index, bool enable)
 {
@@ -86,6 +86,8 @@ void WorkThread()
     cv::Mat testImage;
     int down, right, up, left;
     bool bRet = false;
+    int scenario_mode;
+    int danger_type = CAR_STAY;
 
     while(!g_bForceExit)
     {
@@ -140,11 +142,12 @@ again:
         // 6. analyze the picuture
         threshold = (int)CUtil::CalculateCarThreshold();
         bRisk = false;
+        scenario_mode = CUtil::ini_query_bool("configure", "scenario_mode", 0);
         if(!g_ForceAlarm)
         {
             char buffer[100];
             USER_PRINT("going to check the image...\n");
-            bRisk = TargetDetection(testImage(Rect(left, up, right - left, down - up)), threshold, false);
+            bRisk = TargetDetection(testImage(Rect(left, up, right - left, down - up)), threshold, false, scenario_mode, danger_type);
             USER_PRINT(">>>>>> bRisk = %d, threshold = %d\n", bRisk, threshold); 
             system(buffer);
         }
@@ -195,12 +198,16 @@ again:
             if(CUtil::GetSendSMSStatus())
             {
                 vector<string> vPhoneNumbers = CUtil::GetPhoneNumber();
-                USER_PRINT("start to send sms to [%d] people ...\n", 
-                    vPhoneNumbers.size());
+                USER_PRINT("start to send sms to [%d] people ...\n", vPhoneNumbers.size());
+                string message;
+                if(danger_type == CAR_STAY)
+                    message = " 有危险车辆驻留!!! ";
+                else
+                    message = " 有危险车辆施工!!! ";
+
                 for(unsigned int i = 0; i < vPhoneNumbers.size(); i++)
                 {
-                    bRet = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation()
-                        + " 有危险车辆驻留!!! " + imgUrl);
+                    bool bRet = SendSMS(vPhoneNumbers.at(i), CUtil::GetLocation() + "(V" + CUtil::CheckVersion() + ".0)" + message + imgUrl);
                     if(bRet)
                         {USER_PRINT("send sms success.\n");} 
                     else
@@ -431,6 +438,8 @@ int main( int argc, char* argv[] )
         exit(0);
     }
     
+    system("echo [`date`] started Main >> /root/restart.log");
+    
     char buf[1024] = { 0 };
     int n = readlink("/proc/self/exe" , buf , sizeof(buf));
     if( n > 0 && n < sizeof(buf))
@@ -478,8 +487,22 @@ int main( int argc, char* argv[] )
         double battery_voltage = CUtil::GetBattery().battery_voltage;
         double alarm_voltage = CUtil::ini_query_float("init", "alarm_voltage", -1);
         USER_PRINT("solar battery voltage = %f, alarm voltage = %f.\n", battery_voltage, alarm_voltage);
-        if(battery_voltage < alarm_voltage)
+        if(battery_voltage < alarm_voltage && battery_voltage > 0)
         {
+            if(CUtil::GetSendSMSStatus())
+            {
+                vector<string> vPhoneNumbers = CUtil::GetPhoneNumber();
+                USER_PRINT("start to send sms to [%d] people ...\n", 
+                    vPhoneNumbers.size());
+                for(unsigned int i = 0; i < vPhoneNumbers.size(); i++)
+                {
+                    bool bRet = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation() + "电池电压过低!!");
+                    if(bRet)
+                        {USER_PRINT("send sms success.\n");} 
+                    else
+                        {USER_PRINT("send sms failed.\n");}
+                }
+            }
             // report to watchdog board, and shutdown main board to charge battery.
             system("poweroff &"); 
             exit(0);
@@ -517,7 +540,7 @@ int main( int argc, char* argv[] )
            time_t timep;
            time(&timep);
            struct tm *pTM = localtime(&timep);
-           if(pTM->tm_hour == 6 && pTM->tm_min < 2)
+           if(pTM->tm_hour == 6 && pTM->tm_min < 35 && pTM->tm_min > 30)
            {
                sleep(2*60);
                RestartSystem(DAILY_RESTART);

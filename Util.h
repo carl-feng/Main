@@ -31,6 +31,7 @@ public:
     string night;
     string communicator_server;
     string tower_name;
+    string scenario_mode;
 };
 
 class status

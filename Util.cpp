@@ -67,6 +67,7 @@ configure CUtil::GetConfigure()
     c.check_interval_night = CUtil::ini_query_string("configure", "check_interval_night", "200");
     c.morning = CUtil::ini_query_string("configure", "morning", "6");
     c.night = CUtil::ini_query_string("configure", "night", "18");
+    c.scenario_mode = CUtil::ini_query_string("configure", "scenario_mode", "0");
     c.communicator_server = CUtil::GetServerIP();
     c.tower_name = CUtil::ini_query_string("configure", "tower_name", "");
     return c;
@@ -79,6 +80,7 @@ void CUtil::SetConfigure(configure c)
     CUtil::ini_save_string("configure", "check_interval_night", c.check_interval_night.c_str());
     CUtil::ini_save_string("configure", "morning", c.morning.c_str());
     CUtil::ini_save_string("configure", "night", c.night.c_str());
+    CUtil::ini_save_string("configure", "scenario_mode", c.scenario_mode.c_str());
     CUtil::ini_save_string("configure", "communicator_server", c.communicator_server.c_str());
     CUtil::ini_save_string("configure", "tower_name", c.tower_name.c_str());
 }

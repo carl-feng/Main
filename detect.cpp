@@ -8,6 +8,10 @@
 
 using namespace std;
 using namespace cv;
+
+#define CAR_STAY 0
+#define CAR_WORK 1
+
 const double PI = 3.141592654;
 double area = 0;
 int largestComp = 0;
@@ -28,16 +32,18 @@ void drawDetectLines(Mat& image, const vector<Vec4i>& lines, Scalar& color)
         ++it; 
     } 
 }
-
-bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model)
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model, int scenario_model, int& danger_type)//添加了 int& danger_type,bool changjing_model(0:正常场景，1:非地面场景，默认为0，由PAD提供)
 {
     int niters = 3;
     bool Danger_Flag=false;
+	bool Line_Flag=false; //杆检测标志
+	//bool Work_Flag=false;//添加Work_Flag,用以标示驻留还是施工的情况
     Mat temp, fgmask, fgimg;
     vector<vector<Point> > contours;
     vector<Vec4i> hierarchy;
 
-    bg_model(img, fgmask, update_bg_model ? 0.005 : 0);
+    bg_model(img, fgmask, update_bg_model ? 0.005 : 0);//
 
     if(update_bg_model) return false;
 
@@ -60,58 +66,116 @@ bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model)
         convexHull(Mat(contours[idx]), hull);
         area = contourArea(hull);
         printf("&&&&&&&&&& threshold = %d, area = %f\n", Pixel_Threshold, area);
-        if (area > Pixel_Threshold)
-        {
-            //largestComp = idx;
-            //nowArea=area;
-            //Scalar color(0, 255, 0);
-            //drawContours(fgimg, contours, largestComp, color, CV_FILLED, 8, hierarchy);
-            Danger_Flag=true;
-			 Rect r = boundingRect(Mat(contours[idx]));
-			 Scalar scalar(0,0,255);
-			 rectangle(img, r, scalar, 2); 
-			 vector<Point> ::iterator iter1 =contours[idx].begin();
-			  long Xmax =(*iter1).x;
-			  long Xmin =(*iter1).x;
-			  long Ymax =(*iter1).y;
-			  long Ymin =(*iter1).y;
-			  while(iter1 != contours[idx].end())
-			  {	  
-				 if ((*iter1).x>=Xmax)
-				 {
-                    Xmax=(*iter1).x;
-				 }
-				 if ((*iter1).x<Xmin)
-				 {
-					Xmin =(*iter1).x;
-				 }
-				 if ((*iter1).y>=Ymax)
-				 {
-					 Ymax=(*iter1).y;
-				 }
-				 if ((*iter1).y<Ymin)
-				 {
-					 Ymin=(*iter1).y;
-				 }
-				 ++iter1;
-			  }
-			   Mat edge;
-			   Mat img2(img.rows,img.cols,CV_8UC3);
-			   img(Rect(Xmin,Ymin,Xmax-Xmin,Ymax-Ymin)).copyTo(img2);	  
-				   cvtColor(img2,img2,CV_BGR2GRAY);
-				   Canny(img2,edge,125,350);
-				   vector<Vec4i> lines;
+       
+        long Xmax;
+        long Xmin;
+        long Ymax;
+        long Ymin;
+		if(scenario_model == 0)
+		{
+			if (area > Pixel_Threshold)
+			{
+				 Danger_Flag=true;//有车出现
+				 danger_type= CAR_STAY;//驻留标志
+				 Rect r = boundingRect(Mat(contours[idx]));
+				 Scalar scalar(0,0,255);
+				 rectangle(img, r, scalar, 2); 
 
-				   HoughLinesP(edge, lines, 1, CV_PI/180, 80, 40, 5);
-         }
+				 vector<Point> ::iterator iter1 =contours[idx].begin();
+				  Xmax =(*iter1).x;
+				  Xmin =(*iter1).x;
+				  Ymax =(*iter1).y;
+				  Ymin =(*iter1).y;
+				  while(iter1 != contours[idx].end())
+				  {	  
+					 if ((*iter1).x>=Xmax)
+					 {
+						Xmax=(*iter1).x;
+					 }
+					 if ((*iter1).x<Xmin)
+					 {
+						Xmin =(*iter1).x;
+					 }
+					 if ((*iter1).y>=Ymax)
+					 {
+						 Ymax=(*iter1).y;
+					 }
+					 if ((*iter1).y<Ymin)
+					 {
+						 Ymin=(*iter1).y;
+					 }
+					 ++iter1;
+				  }
+			 }
+	 	
+			 Mat edge;
+			 Mat img2(img.rows,img.cols,CV_8UC3);
+			 img(Rect(Xmin,Ymin,Xmax-Xmin,Ymax-Ymin)).copyTo(img2);	  
+				
+			 cvtColor(img2,img2,CV_BGR2GRAY);
+			 Canny(img2,edge,125,350);
+			 vector<Vec4i> lines;
+			 HoughLinesP(edge, lines, 1, CV_PI/180, 80, 40, 5);
+			 if(lines.size()>0)//
+			 {
+				Line_Flag=true; //有杆出现 
+			 }
+			 if((Danger_Flag==true) &&(Line_Flag==true))
+			 {
+				danger_type = CAR_WORK;//施工
+			 }
+		}
+		else
+		{
+			      vector<Point> ::iterator iter1 =contours[idx].begin();
+				  Xmax =(*iter1).x;
+				  Xmin =(*iter1).x;
+				  Ymax =(*iter1).y;
+				  Ymin =(*iter1).y;
+				  while(iter1 != contours[idx].end())
+				  {	  
+					 if ((*iter1).x>=Xmax)
+					 {
+						Xmax=(*iter1).x;
+					 }
+					 if ((*iter1).x<Xmin)
+					 {
+						Xmin =(*iter1).x;
+					 }
+					 if ((*iter1).y>=Ymax)
+					 {
+						 Ymax=(*iter1).y;
+					 }
+					 if ((*iter1).y<Ymin)
+					 {
+						 Ymin=(*iter1).y;
+					 }
+					 ++iter1;
+				  }
+
+			 Mat edge;
+			 Mat img2(img.rows,img.cols,CV_8UC3);
+			 img(Rect(Xmin,Ymin,Xmax-Xmin,Ymax-Ymin)).copyTo(img2);	  
+				
+			 cvtColor(img2,img2,CV_BGR2GRAY);
+			 Canny(img2,edge,125,350);
+			 vector<Vec4i> lines;
+			 HoughLinesP(edge, lines, 1, CV_PI/180, 80, 60, 5);
+			 if(lines.size()>0)//
+			 {
+				Line_Flag=true; //有杆出现
+				danger_type = CAR_WORK;//施工
+			 }
+		}
     }
 
-    return Danger_Flag;
+    return Danger_Flag || Line_Flag;
 }
 
 void ReadandTrain(Mat img)
 {
-    TargetDetection(img, 0, true);
+    int mode;
+    TargetDetection(img, 0, true, 0, mode);
 }
 
 /*int main()

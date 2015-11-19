@@ -73,6 +73,7 @@ static int process_req(struct mg_connection *conn) {
         message["info"]["configure"]["check_interval_night"] = c.check_interval_night;
         message["info"]["configure"]["morning"] = c.morning;
         message["info"]["configure"]["night"] = c.night;
+        message["info"]["configure"]["scenario_mode"] = c.scenario_mode;
 
         status s = CUtil::GetStatus();
         message["info"]["state"]["wifi"] = s.wifi;
@@ -255,6 +256,7 @@ static int process_req(struct mg_connection *conn) {
                 c.communicator_server = body["data"]["communicator_server"].asCString();
                 c.morning = body["data"]["morning"].asCString();
                 c.night = body["data"]["night"].asCString();
+                c.scenario_mode = body["data"]["scenario_mode"].asCString();
                 CUtil::SetConfigure(c);
                 out["error_code"] = SUCCESS_CODE;
                 out["error_message"] = "paramconf success.";

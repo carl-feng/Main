@@ -1,4 +1,5 @@
 #!/bin/bash
 
-ntpdate pool.ntp.org
+ntpdate -s -u pool.ntp.org
+
 echo [`date`] sync time >> /root/sync_time
