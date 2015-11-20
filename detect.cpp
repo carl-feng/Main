@@ -37,8 +37,7 @@ bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model, int sce
 {
     int niters = 3;
     bool Danger_Flag=false;
-	bool Line_Flag=false; //杆检测标志
-	//bool Work_Flag=false;//添加Work_Flag,用以标示驻留还是施工的情况
+    bool Line_Flag=false; //杆检测标志
     Mat temp, fgmask, fgimg;
     vector<vector<Point> > contours;
     vector<Vec4i> hierarchy;
@@ -66,107 +65,48 @@ bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model, int sce
         convexHull(Mat(contours[idx]), hull);
         area = contourArea(hull);
         printf("&&&&&&&&&& threshold = %d, area = %f\n", Pixel_Threshold, area);
-       
-        long Xmax;
-        long Xmin;
-        long Ymax;
-        long Ymin;
-		if(scenario_model == 0)
-		{
-			if (area > Pixel_Threshold)
-			{
-				 Danger_Flag=true;//有车出现
-				 danger_type= CAR_STAY;//驻留标志
-				 Rect r = boundingRect(Mat(contours[idx]));
-				 Scalar scalar(0,0,255);
-				 rectangle(img, r, scalar, 2); 
+        Rect r = boundingRect(Mat(contours[idx]));
+   
+        if(scenario_model == 0)
+        {
+            if (area > Pixel_Threshold)
+            {
+                Danger_Flag=true;//有车出现
+                danger_type= CAR_STAY;//驻留标志     
+            }
+            Mat edge;
+            Mat img2(img.rows,img.cols,CV_8UC3);
+            img(r).copyTo(img2);   
 
-				 vector<Point> ::iterator iter1 =contours[idx].begin();
-				  Xmax =(*iter1).x;
-				  Xmin =(*iter1).x;
-				  Ymax =(*iter1).y;
-				  Ymin =(*iter1).y;
-				  while(iter1 != contours[idx].end())
-				  {	  
-					 if ((*iter1).x>=Xmax)
-					 {
-						Xmax=(*iter1).x;
-					 }
-					 if ((*iter1).x<Xmin)
-					 {
-						Xmin =(*iter1).x;
-					 }
-					 if ((*iter1).y>=Ymax)
-					 {
-						 Ymax=(*iter1).y;
-					 }
-					 if ((*iter1).y<Ymin)
-					 {
-						 Ymin=(*iter1).y;
-					 }
-					 ++iter1;
-				  }
-			 }
-	 	
-			 Mat edge;
-			 Mat img2(img.rows,img.cols,CV_8UC3);
-			 img(Rect(Xmin,Ymin,Xmax-Xmin,Ymax-Ymin)).copyTo(img2);	  
-				
-			 cvtColor(img2,img2,CV_BGR2GRAY);
-			 Canny(img2,edge,125,350);
-			 vector<Vec4i> lines;
-			 HoughLinesP(edge, lines, 1, CV_PI/180, 80, 40, 5);
-			 if(lines.size()>0)//
-			 {
-				Line_Flag=true; //有杆出现 
-			 }
-			 if((Danger_Flag==true) &&(Line_Flag==true))
-			 {
-				danger_type = CAR_WORK;//施工
-			 }
-		}
-		else
-		{
-			      vector<Point> ::iterator iter1 =contours[idx].begin();
-				  Xmax =(*iter1).x;
-				  Xmin =(*iter1).x;
-				  Ymax =(*iter1).y;
-				  Ymin =(*iter1).y;
-				  while(iter1 != contours[idx].end())
-				  {	  
-					 if ((*iter1).x>=Xmax)
-					 {
-						Xmax=(*iter1).x;
-					 }
-					 if ((*iter1).x<Xmin)
-					 {
-						Xmin =(*iter1).x;
-					 }
-					 if ((*iter1).y>=Ymax)
-					 {
-						 Ymax=(*iter1).y;
-					 }
-					 if ((*iter1).y<Ymin)
-					 {
-						 Ymin=(*iter1).y;
-					 }
-					 ++iter1;
-				  }
+            cvtColor(img2,img2,CV_BGR2GRAY);
+            Canny(img2,edge,125,350);
+            vector<Vec4i> lines;
+            HoughLinesP(edge, lines, 1, CV_PI/180, 80, 40, 5);
+            if(lines.size()>0)//
+            {
+                Line_Flag=true; //有杆出现 
+            }
+            if((Danger_Flag==true) &&(Line_Flag==true))
+            {
+                danger_type = CAR_WORK;//施工
+            }
+        }
+        else
+        {
+            Mat edge;
+            Mat img2(img.rows,img.cols,CV_8UC3);
+            img(r).copyTo(img2); 
 
-			 Mat edge;
-			 Mat img2(img.rows,img.cols,CV_8UC3);
-			 img(Rect(Xmin,Ymin,Xmax-Xmin,Ymax-Ymin)).copyTo(img2);	  
-				
-			 cvtColor(img2,img2,CV_BGR2GRAY);
-			 Canny(img2,edge,125,350);
-			 vector<Vec4i> lines;
-			 HoughLinesP(edge, lines, 1, CV_PI/180, 80, 60, 5);
-			 if(lines.size()>0)//
-			 {
-				Line_Flag=true; //有杆出现
-				danger_type = CAR_WORK;//施工
-			 }
-		}
+            cvtColor(img2,img2,CV_BGR2GRAY);
+            Canny(img2,edge,125,350);
+            vector<Vec4i> lines;
+            HoughLinesP(edge, lines, 1, CV_PI/180, 80, 60, 5);
+            if(lines.size()>0)//
+            {
+                Line_Flag=true; //有杆出现
+                danger_type = CAR_WORK;//施工
+            }
+        }
     }
 
     return Danger_Flag || Line_Flag;

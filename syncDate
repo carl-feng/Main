@@ -1,5 +1,24 @@
 #!/bin/bash
 
-ntpdate -s -u pool.ntp.org
+#step sync
+args_step="-u -b"
 
-echo [`date`] sync time >> /root/sync_time
+#slew sync
+args_slew="-u -B"
+
+#ntp server
+ntp_server=pool.ntp.org
+
+year=$(date|awk '{print $6}')
+echo "year of now = " $year >> /root/sync_time.log
+if [ $year -lt 2015 ]; then
+    echo "[`date`] step sync" >> /root/sync_time.log
+    /usr/sbin/ntpdate $args_step $ntp_server
+else
+    echo "[`date`] slew sync" >> /root/sync_time.log
+    /usr/sbin/ntpdate $args_slew $ntp_server
+    echo "last ret = " $?
+fi
+
+echo "[`date`] sync time after" >> /root/sync_time.log
+echo "" >> /root/sync_time.log

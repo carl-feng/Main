@@ -425,6 +425,12 @@ void my_func(int sign_no)
 extern void server_thread();
 extern void expire_check_thread();
 
+void sync_time_thread()
+{
+    sleep(2*60);
+    CUtil::SyncDateTime();
+}
+
 int main( int argc, char* argv[] )
 {
     signal(SIGINT,my_func);
@@ -464,6 +470,7 @@ int main( int argc, char* argv[] )
     boost::thread chkthrd(&expire_check_thread);
     boost::thread srvthrd(&server_thread);
     boost::thread heartthrd(&HeartBeatThread);
+    boost::thread sync_timethrd(&sync_time_thread);
 
     CUtil::ChangeAPSSIDIfNeeded(); 
         
@@ -474,7 +481,6 @@ int main( int argc, char* argv[] )
     // wait for 3G connection ready
     USER_PRINT("3G connection is ready\n");
    
-    CUtil::SyncDateTime();
  
     boost::thread workthrd(&WorkThread);
     //boost::thread workthrd2(&WorkThread_2);
@@ -540,7 +546,7 @@ int main( int argc, char* argv[] )
            time_t timep;
            time(&timep);
            struct tm *pTM = localtime(&timep);
-           if(pTM->tm_hour == 6 && pTM->tm_min < 35 && pTM->tm_min > 30)
+           if(pTM->tm_hour == 6 && pTM->tm_min <= 33 && pTM->tm_min > 30)
            {
                sleep(2*60);
                RestartSystem(DAILY_RESTART);
