@@ -459,5 +459,5 @@ bool CUtil::SetNightInt(int night)
 
 void CUtil::SyncDateTime()
 {
-    system("ntpdate pool.ntp.org");
+    system("/usr/sbin/ntpdate -s -b pool.ntp.org");
 }

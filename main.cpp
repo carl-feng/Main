@@ -542,15 +542,22 @@ int main( int argc, char* argv[] )
             sleep(1);
             if(g_bForceExit) break;
 
-           // restart board at about 6:00am
-           time_t timep;
-           time(&timep);
-           struct tm *pTM = localtime(&timep);
-           if(pTM->tm_hour == 6 && pTM->tm_min <= 33 && pTM->tm_min > 30)
-           {
-               sleep(2*60);
-               RestartSystem(DAILY_RESTART);
-           }
+            // restart board at about 6:00am
+            time_t timep;
+            time(&timep);
+            struct tm *pTM = localtime(&timep);
+            if(pTM->tm_year+1900 == 1970)
+            {
+                CUtil::SyncDateTime();
+                time(&timep);
+                pTM = localtime(&timep);
+                SendSetSystemTimeCmd(pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
+            }
+            if(pTM->tm_hour == 6 && pTM->tm_min <= 33 && pTM->tm_min > 30)
+            {
+                sleep(2*60);
+                RestartSystem(DAILY_RESTART);
+            }
         }
     }
 
