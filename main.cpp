@@ -226,6 +226,7 @@ again:
 sleep:
         // 9. sleep if needed
         {
+            char buffer[256] = {0};
             int sleepSec;
             time_t now;
             time(&now);
@@ -237,6 +238,9 @@ sleep:
             if((night > morning && (pTM->tm_hour >= night || pTM->tm_hour < morning)) ||
                 night < morning && pTM->tm_hour >= night && pTM->tm_hour < morning)
             {
+                snprintf(buffer, 256, "echo [`date`] tm_hour = %d, morning = %d, night = %d >> /root/restart.log",
+                         pTM->tm_hour, morning, night);
+                system(buffer);
                 system("echo [`date`] shutdown due to night >> /root/restart.log");
                 system("poweroff &");
                 exit(0);
