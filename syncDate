@@ -19,6 +19,7 @@ else
     /usr/sbin/ntpdate $args_slew $ntp_server
     echo "last ret = " $?
 fi
+hwclock -w
 
 echo "[`date`] sync time after" >> /root/sync_time.log
 echo "" >> /root/sync_time.log

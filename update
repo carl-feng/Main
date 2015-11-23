@@ -23,3 +23,16 @@ if [ ! -e "/etc/cron.hourly/syncDate" ]; then
     cp /root/Main/syncDate /etc/cron.hourly/
     echo "copy syncDate file success".
 fi
+
+md5_syncDate=`md5sum /etc/cron.hourly/syncDate | awk '{print $1}'`;
+md5_syncDate_2=`md5sum syncDate | awk '{print $1}'`;
+
+echo "md5[etc syncDate] "$md5_syncDate
+echo "md5[syncDate] "$md5_syncDate_2
+
+if [ "$md5_syncDate" != "$md5_syncDate_2" ]; then
+    echo "change syncDate"
+    cp /root/Main/syncDate /etc/cron.hourly/
+fi
+
+

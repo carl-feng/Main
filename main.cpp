@@ -242,7 +242,9 @@ sleep:
                          pTM->tm_hour, morning, night);
                 system(buffer);
                 system("echo [`date`] shutdown due to night >> /root/restart.log");
-                system("poweroff &");
+                system("/usr/bin/killall watchdog");
+                sleep(10);
+                system("/sbin/poweroff");
                 exit(0);
             }
             if(sleepSec > 0)
@@ -496,6 +498,7 @@ int main( int argc, char* argv[] )
         SendSolarStatusCmd();
         double battery_voltage = CUtil::GetBattery().battery_voltage;
         double alarm_voltage = CUtil::ini_query_float("init", "alarm_voltage", -1);
+        SendSetAlarmVoltageCmd(alarm_voltage);
         USER_PRINT("solar battery voltage = %f, alarm voltage = %f.\n", battery_voltage, alarm_voltage);
         if(battery_voltage < alarm_voltage && battery_voltage > 0)
         {
@@ -506,7 +509,7 @@ int main( int argc, char* argv[] )
                     vPhoneNumbers.size());
                 for(unsigned int i = 0; i < vPhoneNumbers.size(); i++)
                 {
-                    bool bRet = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation() + "电池电压过低!!");
+                    bool bRet = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation() + " 电池电压过低!!");
                     if(bRet)
                         {USER_PRINT("send sms success.\n");} 
                     else
@@ -514,11 +517,11 @@ int main( int argc, char* argv[] )
                 }
             }
             // report to watchdog board, and shutdown main board to charge battery.
-            system("poweroff &"); 
+            system("/usr/bin/killall watchdog");
+            sleep(10);
+            system("/sbin/poweroff"); 
             exit(0);
         }
-
-        SendSetAlarmVoltageCmd(alarm_voltage);
 
         int morning = CUtil::GetMorningInt();
         int night = CUtil::GetNightInt();
