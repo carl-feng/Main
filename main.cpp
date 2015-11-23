@@ -476,14 +476,22 @@ int main( int argc, char* argv[] )
     boost::thread chkthrd(&expire_check_thread);
     boost::thread srvthrd(&server_thread);
     boost::thread heartthrd(&HeartBeatThread);
-    boost::thread sync_timethrd(&sync_time_thread);
+    //boost::thread sync_timethrd(&sync_time_thread);
 
     CUtil::ChangeAPSSIDIfNeeded(); 
-        
+
+sync_time:
     time_t _now = time(NULL);
     struct tm *pTM = localtime(&_now);
+    if(pTM->tm_year+1900 == 1970)
+    {
+        USER_PRINT("system time is wrong, so sync time from network\n");
+        CUtil::SyncDateTime();
+        sleep(10);
+        goto sync_time;
+    }
+    USER_PRINT("1. sync time to watchdog board, %d-%d-%d %d:%d:%d\n", pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
     SendSetSystemTimeCmd(pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
-    
     // wait for 3G connection ready
     USER_PRINT("3G connection is ready\n");
    
@@ -558,6 +566,7 @@ int main( int argc, char* argv[] )
                 CUtil::SyncDateTime();
                 time(&timep);
                 pTM = localtime(&timep);
+                USER_PRINT("2. sync time to watchdog board, %d-%d-%d %d:%d:%d\n", pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
                 SendSetSystemTimeCmd(pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
             }
             if(pTM->tm_hour == 6 && pTM->tm_min <= 33 && pTM->tm_min > 30)
