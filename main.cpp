@@ -231,15 +231,16 @@ sleep:
             time_t now;
             time(&now);
             struct tm *pTM = localtime(&now);
+            int tm_hour = pTM->tm_hour;
             int morning = CUtil::GetMorningInt();
             int night = CUtil::GetNightInt();
             USER_PRINT("morning = %d, night = %d.\n", morning, night);
             sleepSec = CUtil::GetCheckInterval();
-            if((night > morning && (pTM->tm_hour >= night || pTM->tm_hour < morning)) ||
-                night < morning && pTM->tm_hour >= night && pTM->tm_hour < morning)
+            if((night > morning && (tm_hour >= night || tm_hour < morning)) ||
+                (night < morning && tm_hour >= night && tm_hour < morning))
             {
                 snprintf(buffer, 256, "echo [`date`] tm_hour = %d, morning = %d, night = %d >> /root/restart.log",
-                         pTM->tm_hour, morning, night);
+                         tm_hour, morning, night);
                 system(buffer);
                 system("echo [`date`] shutdown due to night >> /root/restart.log");
                 system("/usr/bin/killall watchdog");
