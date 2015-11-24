@@ -14,7 +14,8 @@
 { \
         time_t timep; \
         time( &timep ); \
-        struct tm *pTM = localtime( &timep ); \
+        struct tm *pTM = new struct tm; \
+        localtime_r( &timep, pTM ); \
         USER_PRINT_BASE( "[%04d-%02d-%02d %02d:%02d:%02d]"format, pTM->tm_year+1900, \
                 pTM->tm_mon+1, pTM->tm_mday,\
                 pTM->tm_hour, pTM->tm_min, pTM->tm_sec, ##args ) ; \

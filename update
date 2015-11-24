@@ -1,5 +1,7 @@
 #!/bin/bash
 
+TZ=Asia/Shanghai
+
 cd /root/Main
 
 if [ -e "/root/Main/version.txt" ]; then

@@ -20,10 +20,12 @@ int main(int argc, char* argv[])
     }
     time_t timep;
     time(&timep);
-    struct tm *pTM = localtime(&timep);
+    struct tm *pTM = new struct tm;
+    localtime_r(&timep, pTM);
     char buffer[50] = {0};
     snprintf(buffer, 50, "%04d-%02d-%02d %02d:%02d:%02d", pTM->tm_year+1900,
         pTM->tm_mon+1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
+    delete pTM;
     CvFont font;
     cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX, 0.7, 0.7);
     cvPutText(pImg, buffer, cvPoint(10, 50), &font, CV_RGB(250,250,250));

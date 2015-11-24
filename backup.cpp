@@ -91,7 +91,8 @@ bool delete_expired_pic()
     time_t timep;
     const char* root = "/mnt/tf/";
     time(&timep);
-    struct tm *pTM = localtime(&timep);
+    struct tm *pTM = new struct tm;
+    localtime_r(&timep, pTM);
     for(int i = 0; i < NUM; i++)
     {
         if((pTM->tm_mon + 1 - i) <= 0)
@@ -99,6 +100,7 @@ bool delete_expired_pic()
         else
             months[i] = pTM->tm_mon + 1 - i;
     }
+    delete pTM;
 
     DIR *dp;
     struct dirent *entry;

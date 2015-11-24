@@ -1,5 +1,7 @@
 #!/bin/bash
 
+TZ=Asia/Shanghai
+
 #step sync
 args_step="-u -b"
 

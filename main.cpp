@@ -44,10 +44,12 @@ bool CapturePic(int index, string& jpgPath)
 {
     time_t timep;
     time(&timep);
-    struct tm *pTM = localtime(&timep);
+    struct tm *pTM = new struct tm;
+    localtime_r(&timep, pTM);
     char buffer[50];
     snprintf(buffer, 50, "%04d%02d%02d-%02d%02d%02d.jpg", pTM->tm_year+1900, 
         pTM->tm_mon+1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
+    delete pTM;
     char cmd[256] = {0};
     jpgPath = curPath;
     jpgPath += "/";
@@ -230,7 +232,8 @@ sleep:
             int sleepSec;
             time_t now;
             time(&now);
-            struct tm *pTM = localtime(&now);
+            struct tm *pTM = new struct tm;
+            localtime_r(&now, pTM);
             int tm_hour = pTM->tm_hour;
             int morning = CUtil::GetMorningInt();
             int night = CUtil::GetNightInt();
@@ -304,7 +307,8 @@ void WorkThread_2()
     {
         // 1. check if time at 6:00 or 18:00
         time_t now = time(NULL);
-        struct tm *pTM = localtime(&now);
+        struct tm *pTM = new struct tm;
+        localtime_r(&now, pTM);
         if(!((pTM->tm_hour == 6 || pTM->tm_hour == 18) && (pTM->tm_min == 0)))
         {
             USER_PRINT("sleep until 6:00 or 18:00 ...\n");
@@ -316,7 +320,8 @@ void WorkThread_2()
             }
             continue;
         }
-        
+        delete pTM;
+
         // 2. check if needed to alarm risk
         bool Enable = CUtil::GetAlarmStatus();
         if(!Enable)
@@ -483,7 +488,8 @@ int main( int argc, char* argv[] )
 
 sync_time:
     time_t _now = time(NULL);
-    struct tm *pTM = localtime(&_now);
+    struct tm *pTM = new struct tm;
+    localtime_r(&_now, pTM);
     if(pTM->tm_year+1900 == 1970)
     {
         USER_PRINT("system time is wrong, so sync time from network\n");
@@ -493,6 +499,8 @@ sync_time:
     }
     USER_PRINT("1. sync time to watchdog board, %d-%d-%d %d:%d:%d\n", pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
     SendSetSystemTimeCmd(pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
+    delete pTM;
+
     // wait for 3G connection ready
     USER_PRINT("3G connection is ready\n");
    
@@ -541,7 +549,8 @@ sync_time:
         }
 
         time_t now = time(NULL);
-        struct tm *pTM = localtime(&now);
+        struct tm *pTM = new struct tm;
+        localtime_r(&now, pTM);
         static int hour = 0;
 
         if(pTM->tm_hour != hour)
@@ -550,6 +559,7 @@ sync_time:
             g_bInitModel = false;
         }
         hour = pTM->tm_hour;
+        delete pTM;
 
         /* sleep 120s */
         int sec = 120;
@@ -561,12 +571,13 @@ sync_time:
             // restart board at about 6:00am
             time_t timep;
             time(&timep);
-            struct tm *pTM = localtime(&timep);
+            struct tm *pTM = new struct tm;
+            localtime_r(&timep, pTM);
             if(pTM->tm_year+1900 == 1970)
             {
                 CUtil::SyncDateTime();
                 time(&timep);
-                pTM = localtime(&timep);
+                localtime_r(&timep, pTM);
                 USER_PRINT("2. sync time to watchdog board, %d-%d-%d %d:%d:%d\n", pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
                 SendSetSystemTimeCmd(pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday, pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
             }
@@ -575,6 +586,7 @@ sync_time:
                 sleep(2*60);
                 RestartSystem(DAILY_RESTART);
             }
+            delete pTM;
         }
     }
 
