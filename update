@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TZ=Asia/Shanghai
+export TZ=Asia/Shanghai
 
 cd /root/Main
 

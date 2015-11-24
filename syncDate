@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TZ=Asia/Shanghai
+export TZ=Asia/Shanghai
 
 #step sync
 args_step="-u -b"
