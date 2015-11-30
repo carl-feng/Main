@@ -255,7 +255,7 @@ sleep:
             if(sleepSec > 0)
             {
                 USER_PRINT("Sleep %d seconds in WorkThread.\n", sleepSec);
-                while(!g_bForceExit && !g_ForceAlarm && g_bInitModel && sleepSec--)
+                while(!g_bForceExit && (!g_ForceAlarm && g_bInitModel && sleepSec-- || !CUtil::GetAlarmStatus()))
                     sleep(1);
             }
         }
