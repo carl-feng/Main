@@ -245,10 +245,11 @@ sleep:
                 snprintf(buffer, 256, "echo [`date`] tm_hour = %d, morning = %d, night = %d >> /root/restart.log",
                          tm_hour, morning, night);
                 system(buffer);
-                system("echo [`date`] shutdown due to night >> /root/restart.log");
+                system("echo [`date`] exit Main due to night >> /root/restart.log");
                 system("/usr/bin/killall watchdog");
+                system("/bin/sync");
                 sleep(10);
-                system("/sbin/poweroff");
+                //system("/sbin/poweroff");
                 exit(0);
             }
             if(sleepSec > 0)
@@ -526,7 +527,8 @@ sync_time:
                     vPhoneNumbers.size());
                 for(unsigned int i = 0; i < vPhoneNumbers.size(); i++)
                 {
-                    bool bRet = SendSMS(vPhoneNumbers.at(i),  CUtil::GetLocation() + " 电池电压过低!!");
+                    bool bRet = SendSMS(vPhoneNumbers.at(i), CUtil::GetLocation() + "(V" + 
+                        CUtil::CheckVersion() + ") 电池电压过低!!");
                     if(bRet)
                         {USER_PRINT("send sms success.\n");} 
                     else
@@ -534,9 +536,11 @@ sync_time:
                 }
             }
             // report to watchdog board, and shutdown main board to charge battery.
+            system("echo [`date`] exit Main when voltage is low >> /root/restart.log");
             system("/usr/bin/killall watchdog");
+            system("/bin/sync");
             sleep(10);
-            system("/sbin/poweroff"); 
+            //system("/sbin/poweroff"); 
             exit(0);
         }
 
