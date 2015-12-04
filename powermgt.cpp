@@ -84,7 +84,8 @@ bool SendSetSystemTimeCmd(int year, int month, int day, int hour, int minute, in
     szBuf[2] = SET_SYSTEM_TIME_CMD;
     szBuf[3] = 6;
     szBuf[4] = Dec2BCD((uint8_t)(year%100));
-    szBuf[5] = Dec2BCD((uint8_t)month);
+    //hack month always 1
+    szBuf[5] = Dec2BCD((uint8_t)1);
     szBuf[6] = Dec2BCD((uint8_t)day);
     szBuf[7] = Dec2BCD((uint8_t)hour);
     szBuf[8] = Dec2BCD((uint8_t)minute);
