@@ -19,7 +19,7 @@ int largestComp = 0;
 bool update_bg_model = true; 
 int PicNum = 0;
 
-BackgroundSubtractorMOG2 bg_model;
+BackgroundSubtractorMOG bg_model;
 
 void drawDetectLines(Mat& image, const vector<Vec4i>& lines, Scalar& color) 
 { 
@@ -81,7 +81,7 @@ bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model, int sce
             cvtColor(img2,img2,CV_BGR2GRAY);
             Canny(img2,edge,125,350);
             vector<Vec4i> lines;
-            HoughLinesP(edge, lines, 1, CV_PI/180, 80, 40, 5);
+            HoughLinesP(edge, lines, 1, CV_PI/180, 80, 60, 5);
             if(lines.size()>0)//
             {
                 Line_Flag=true; //有杆出现 
