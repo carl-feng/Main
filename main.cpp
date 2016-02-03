@@ -203,9 +203,9 @@ again:
                 USER_PRINT("start to send sms to [%d] people ...\n", vPhoneNumbers.size());
                 string message;
                 if(danger_type == CAR_STAY)
-                    message = " 有危险车辆驻留!!! ";
+                    message = " 有危险车辆驻留施工!!! "; //修改，20160203
                 else
-                    message = " 有危险车辆施工!!! ";
+                    message = " 有危险车辆驻留施工!!! "; //修改，20160203
 
                 for(unsigned int i = 0; i < vPhoneNumbers.size(); i++)
                 {

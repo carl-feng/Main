@@ -109,7 +109,7 @@ bool TargetDetection(Mat img, int Pixel_Threshold, bool update_bg_model, int sce
         }
     }
 
-    return Danger_Flag || Line_Flag;
+    return Danger_Flag && Line_Flag; //修改，20160203
 }
 
 void ReadandTrain(Mat img)
